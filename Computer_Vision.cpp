@@ -13,7 +13,6 @@
 #include "Seeker.hpp"
 #include "Ball.hpp"
 
-#include <opencv2/videoio.hpp>
 using namespace std::chrono;
 
 constexpr int window_size = 50; 
@@ -40,7 +39,13 @@ template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 };
-
+void fun(TCanvas &c1) {
+    while(1) {
+        c1.cd(1);
+        c1.Update();
+        this_thread::sleep_for(chrono::milliseconds(30));
+    }
+};
 /// Создание окна кастомизации
 void Create_Customization() {
 
@@ -55,7 +60,9 @@ void Create_Customization() {
 int main(int argc, char* argv[]) {
     // ROOT PLOTS INIT
     TApplication rootapp("spectrum", &argc, argv);
-    auto c1 = make_unique<TCanvas>("c1", "Data");
+    // auto c1 = make_unique<TCanvas>("c1", "Data");
+    TCanvas* c1 = new TCanvas("c1", "Data");
+    TCanvas & cref = (*c1);
     c1->SetWindowSize(960, 960);
     auto f1 = make_unique<TGraph>(window_size);
     f1->SetTitle("Yee");
@@ -74,6 +81,9 @@ int main(int argc, char* argv[]) {
     f1->Draw();
     c1->cd(2);
     f2->Draw();
+
+    thread th(fun, ref(cref));
+    th.detach();
 
     // Take properties of ball color
     Ball ball(COLOR);
@@ -120,9 +130,8 @@ int main(int argc, char* argv[]) {
         for(size_t i=0;i<window_size;i++) {
             f1->SetPoint(i, xdata[i], ydata[i]);
         };
-        c1->cd(1);
-        c1->Update();
-        c1->Pad()->Draw();
+        // c1->cd(1);
+        // c1->Update();
         imshow("Cam", BGR_frame);
         imshow("Customization", Output_frame);
         if (waitKey(15) >= 0)

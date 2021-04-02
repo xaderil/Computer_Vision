@@ -1,16 +1,8 @@
 #define FPS_SMOOTHING 0.9
-// OpenCV Libraries
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-// #include <sciplot/sciplot.hpp>
 // Other Libraries
-#include <iostream>
 #include <stdint.h>
 #include <chrono>
 #include <thread>
-// #include "armadillo"
 // ROOT Libraries
 #include "TCanvas.h"
 #include "TGraph.h"
@@ -18,19 +10,19 @@
 #include "TAxis.h"
 #include "TSystem.h"
 // Project Headers
-#include "Ball.hpp"
 #include "Seeker.hpp"
-using namespace std;
-using namespace cv;
+#include "Ball.hpp"
+
+#include <opencv2/videoio.hpp>
 using namespace std::chrono;
 
-
-constexpr int window_size = 50;
+constexpr int window_size = 50; 
 int NUM_OF_CAMERA = 0;
 bool CUSTOMIZATION = true;
 string COLOR = "green";
+int FRAME_WIDTH = 1280;
+int FRAME_HEIGHT = 720; 
 
-int MODE = 0;
 int H_MIN = 0;
 int H_MAX = 256;
 int S_MIN = 0;
@@ -44,16 +36,14 @@ cv::Mat Output_frame;
 cv::Mat* Out_ptr = &Output_frame;
 cv::Mat* BGR_ptr = &BGR_frame;
 
-void Change_Mode(int state, void*) {
-    MODE = state;
-};
-
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 };
 
+/// Создание окна кастомизации
 void Create_Customization() {
+
     namedWindow("Customization", WINDOW_AUTOSIZE);
     createTrackbar("H_MIN", "Customization", &H_MIN, 256, 0);
     createTrackbar("H_MAX", "Customization", &H_MAX, 256, 0);
@@ -61,7 +51,6 @@ void Create_Customization() {
     createTrackbar("S_MAX", "Customization", &S_MAX, 256, 0);
     createTrackbar("V_MIN", "Customization", &V_MIN, 256, 0);
     createTrackbar("V_MAX", "Customization", &V_MAX, 256, 0);
-    createTrackbar("MODE", "Customization", 0, 1, Change_Mode);
 };
 int main(int argc, char* argv[]) {
     // ROOT PLOTS INIT
@@ -97,21 +86,37 @@ int main(int argc, char* argv[]) {
     V_MAX = ball.getHSVmax()[2];
 
     VideoCapture video(0);
-
+    video.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M', 'J', 'P', 'G'));
+    video.set(CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
+    video.set(CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
     if (CUSTOMIZATION)
     {
         Create_Customization();
     }
     Seeker seeker(window_size);
-    //Seeker yee(link);
     while (1)
     {
         video.read(BGR_frame);
+        // cout << BGR_frame.size << endl;
         cvtColor(BGR_frame, HSV_frame, COLOR_BGR2HSV);
         inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
+        
         seeker.findObject(Out_ptr, BGR_ptr);
+
         vector<double> xdata = seeker.getXData();
         vector<double> ydata = seeker.getYData();
+        int pxX = seeker.get_pxX();
+        int pxY = seeker.get_pxY();
+        int pxDiameter = seeker.get_pxDiameter();
+
+        ball.setXPos(pxX);
+        ball.setYPos(pxY);
+        ball.setZDiameter(pxDiameter);
+        ball.calculateZRealPos();
+        ball.calculateXRealPos(FRAME_WIDTH, FRAME_HEIGHT);
+        ball.calculateYRealPos(FRAME_WIDTH, FRAME_HEIGHT);
+
+        // ball.calculateXRealPos()
         for(size_t i=0;i<window_size;i++) {
             f1->SetPoint(i, xdata[i], ydata[i]);
         };

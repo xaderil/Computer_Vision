@@ -1,5 +1,6 @@
 #pragma once
 #include <opencv2/core.hpp>
+#include <iostream>
 
 using namespace std;
 using namespace cv;
@@ -10,11 +11,24 @@ public:
 	
 	Ball(string Color);
 
+
+	const float f = 660;	// Коэффициент фокусного расстояния
+	const float d = 0.04; // Диаметр мячика
+
 	int getXPos();
 	void setXPos(int x);
+	void setXRealPos(int x);
+	void calculateXRealPos(int Frame_Width, int Frame_Height);
 
 	int getYPos();
 	void setYPos(int y);
+	void setYRealPos(int y);
+	void calculateYRealPos(int Frame_Width, int Frame_Height);
+
+	int getZDiameter();
+	void setZDiameter(int z);
+	void setZRealPos(int z);
+	void calculateZRealPos();
 
 	Scalar getHSVmin();
 	Scalar getHSVmax();
@@ -25,7 +39,7 @@ public:
 	void setHSVmax(Scalar max);
 
 private:
-	int xPos, yPos;
+	float xPos, yPos, zDiameter, XRealPos, YRealPos, ZRealPos;
 	string Color;
 	Scalar HSVmin, HSVmax;
 };

@@ -27,9 +27,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 #include_directories(${Gnuplot_INCLUDE_DIRS})
 # include_directories(${ARMADILLO_INCLUDE_DIRS})
 #include_directories(${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
-
-
-add_executable(Computer_Vision Computer_Vision.cpp Seeker.cpp Seeker.hpp Ball.cpp Ball.hpp)
+add_executable(Computer_Vision Computer_Vision.cpp Seeker.cpp Seeker.hpp Ball.cpp Ball.hpp Forecaster.cpp Forecaster.hpp)
 
 target_link_libraries(Computer_Vision ${OpenCV_LIBS})
 #target_link_libraries(Computer_Vision ${ARMADILLO_LIBRARIES})

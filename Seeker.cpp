@@ -2,6 +2,7 @@
 
 const int Seeker::MIN_OBJECT_AREA = 15 * 15;
 int Seeker::num_of_chart_data = 0;
+/// В конструкторе объекта инициализируем массивы для графиков
 Seeker::Seeker(int window_size) {
 
 	datasize = window_size;
@@ -13,7 +14,7 @@ Seeker::Seeker(int window_size) {
 		xdata[i] = i + 1;
 	};
 };
-
+/// Поиск объекта, определение его границ и координат центра
 void Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame) {
 	Output_frame->copyTo(frame);
 	vector< vector<Point> > contours;
@@ -56,28 +57,33 @@ void Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame) {
 			for (int i = 0; i < 4; i++) {
 				line(*BGR_frame, vtx[i], vtx[(i + 1) % 4], Scalar(0, 255, 0), 1, LINE_AA);
 			};
+			float RotRectWidth = box.size.width;
+			float RotRectHeight = box.size.height; 
+			float smallest_side = min(RotRectHeight, RotRectWidth);
+			cout << smallest_side << endl;
 			//ball.setXPos(moment.m10 / area);
 			//ball.setYPos(moment.m01 / area);
 			drawContours(*BGR_frame, hull, Max_area_index, Scalar(0, 0, 255), 2, 8);
 			circle(*BGR_frame, Point(xPos[Max_area_index], yPos[Max_area_index]), 3, cv::Scalar(0, 0, 255));
 			putText(*BGR_frame, to_string(xPos[Max_area_index]) + " , " + to_string(xPos[Max_area_index]), Point(xPos[Max_area_index], yPos[Max_area_index] + 20), 1, 1, Scalar(255, 255, 0));
 			/// Заполнение массива данных для графика. Сначала заполняем нули числами, потом сдвигаем влево 
-			if (num_of_chart_data == (ydata.size() - 1))
-			{
+			if (num_of_chart_data == (ydata.size() - 1)) {
 				Seeker::vectorRotateLeft(this->pointer_ydata, areas[Max_area_index]);
 			}
-			else
-			{
+			else {
 				ydata[num_of_chart_data] = areas[Max_area_index];
 				num_of_chart_data++;
 			};
+			this->pxX = xPos[Max_area_index];
+			this->pxY = yPos[Max_area_index];
+			this->pxDiameter = smallest_side;
 		};
 	}
 	else {
 		cout << "Море шумов" << endl;
 	};
 };
-// Вывод массива в терминал
+/// Вывод массива в терминал
 void Seeker::out(vector<double>* ydata) {
 	for(int i = 0; i <= datasize-1; i++) {
 		cout << " " << (*ydata)[i];
@@ -104,4 +110,14 @@ vector<double> Seeker::getYData() {
 };
 vector<double> Seeker::getXData() {
 	return this->xdata;
+};
+
+int Seeker::get_pxX() {
+	return this->pxX;
+};
+int Seeker::get_pxY() {
+	return this->pxY;
+};
+int Seeker::get_pxDiameter() {
+	return this->pxDiameter;
 };

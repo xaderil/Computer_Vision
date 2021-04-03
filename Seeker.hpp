@@ -13,17 +13,22 @@ class Ball;
 class Seeker
 {
 public:
+
+	Seeker(int window_size);
+
 	static const int MIN_OBJECT_AREA;
 	static const int MAX_OBJECT_AREA;
 	static int num_of_chart_data;
-	cv::Mat frame;
-	Seeker(int window_size);
-	static void vectorRotateLeft(vector<double>* ydata, int last_largest_num);
-	void findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame);
-	void out(vector<double>* ydata);
 
-	vector<double> getYData();
-	vector<double> getXData();
+	cv::Mat frame;
+	vector<Point> contour;
+
+	static void vectorRotateLeft(vector<double>* ydata, int last_largest_num); // В дальнейшем избавиться 
+	bool findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame);
+	void drawObject(Mat *BGR_frame, float xPos, float yPos, float zPos, int xPosPx, int yPosPx);
+
+	vector<double> getYData(); // В дальнейшем избавиться 
+	vector<double> getXData(); // В дальнейшем избавиться 
 
 	int get_pxX();
 	int get_pxY();

@@ -1,5 +1,7 @@
 #include "Ball.hpp"
 
+int Ball::f = 940; 
+
 Ball::Ball(string Color) {
 
 	this->Color = Color;
@@ -83,14 +85,15 @@ Scalar Ball::getHSVmax() {
 
 /// Нахождение реального X объекта
 void Ball::calculateXRealPos(int Frame_Width, int Frame_Height) {
-	int Cu = Frame_Width/2;
-	int Cv = Frame_Height/2;
+	float Cu = Frame_Width/2;
 	this->XRealPos = ((xPos-Cu)/f)*ZRealPos;
-	this->YRealPos = ((yPos-Cv)/f)*ZRealPos;
+	cout << xPos << endl;
 };
 /// Нахождение реального Y объекта
 void Ball::calculateYRealPos(int Frame_Width, int Frame_Height) {
-
+	float Cv = Frame_Height/2;
+	this->YRealPos = ((yPos-Cv)/f)*ZRealPos;
+	cout << yPos << endl;
 };
 
 /// Нахождение реального Z объекта
@@ -98,4 +101,16 @@ void Ball::calculateZRealPos() {
 	float Z = (1/(this->zDiameter))*(this->f)*(this->d);
 	this->ZRealPos = Z;
 	// cout << Z << endl;
+};
+
+float Ball::getXRealPos() {
+	return this->XRealPos;
+};
+
+float Ball::getYRealPos() {
+	return this->YRealPos;
+};
+
+float Ball::getZRealPos() {
+	return this->ZRealPos;
 };

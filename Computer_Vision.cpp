@@ -1,4 +1,3 @@
-#define FPS_SMOOTHING 0.9
 // Other Libraries
 #include <stdint.h>
 #include <chrono>
@@ -39,7 +38,8 @@ template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 };
-void fun(TCanvas &c1) {
+/// Обновление графиков в отдельном потоке
+void UPDATE_GRAPHS(TCanvas &c1) {
     while(1) {
         c1.cd(1);
         c1.Update();
@@ -56,6 +56,7 @@ void Create_Customization() {
     createTrackbar("S_MAX", "Customization", &S_MAX, 256, 0);
     createTrackbar("V_MIN", "Customization", &V_MIN, 256, 0);
     createTrackbar("V_MAX", "Customization", &V_MAX, 256, 0);
+    createTrackbar("F_Coeff", "Customization", &Ball::f, 1500, 0);
 };
 int main(int argc, char* argv[]) {
     // ROOT PLOTS INIT
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
     c1->cd(2);
     f2->Draw();
 
-    thread th(fun, ref(cref));
+    thread th(UPDATE_GRAPHS, ref(cref));
     th.detach();
 
     // Take properties of ball color
@@ -99,11 +100,14 @@ int main(int argc, char* argv[]) {
     video.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M', 'J', 'P', 'G'));
     video.set(CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
     video.set(CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
+
     if (CUSTOMIZATION)
     {
         Create_Customization();
     }
+
     Seeker seeker(window_size);
+
     while (1)
     {
         video.read(BGR_frame);
@@ -111,7 +115,7 @@ int main(int argc, char* argv[]) {
         cvtColor(BGR_frame, HSV_frame, COLOR_BGR2HSV);
         inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
         
-        seeker.findObject(Out_ptr, BGR_ptr);
+        bool found = seeker.findObject(Out_ptr, BGR_ptr);
 
         vector<double> xdata = seeker.getXData();
         vector<double> ydata = seeker.getYData();
@@ -125,6 +129,14 @@ int main(int argc, char* argv[]) {
         ball.calculateZRealPos();
         ball.calculateXRealPos(FRAME_WIDTH, FRAME_HEIGHT);
         ball.calculateYRealPos(FRAME_WIDTH, FRAME_HEIGHT);
+
+        float xRealPos = ball.getXRealPos();
+        float yRealPos = ball.getYRealPos();
+        float ZRealPos = ball.getZRealPos();
+
+        if (found) {
+            seeker.drawObject(BGR_ptr,xRealPos, yRealPos, ZRealPos, pxX, pxY);
+        };
 
         // ball.calculateXRealPos()
         for(size_t i=0;i<window_size;i++) {

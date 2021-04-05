@@ -11,6 +11,7 @@
 // Project Headers
 #include "Seeker.hpp"
 #include "Ball.hpp"
+#include "Forecaster.hpp"
 
 using namespace std::chrono;
 
@@ -43,7 +44,13 @@ void UPDATE_GRAPHS(TCanvas &c1) {
     while(1) {
         c1.cd(1);
         c1.Update();
-        this_thread::sleep_for(chrono::milliseconds(30));
+        c1.Pad()->Draw();
+        c1.cd(2);
+        c1.Update();
+        c1.Pad()->Draw();
+        c1.cd(3);
+        c1.Update();
+        c1.Pad()->Draw();
     }
 };
 /// Создание окна кастомизации
@@ -66,22 +73,32 @@ int main(int argc, char* argv[]) {
     TCanvas & cref = (*c1);
     c1->SetWindowSize(960, 960);
     auto f1 = make_unique<TGraph>(window_size);
-    f1->SetTitle("Yee");
-    f1->GetXaxis()->SetTitle("Num");
-    f1->GetYaxis()->SetTitle("Area");
-    f1->SetMinimum(0);
-    f1->SetMaximum(40000);
+    f1->SetTitle("X");
+    f1->GetXaxis()->SetTitle("Time");
+    f1->GetYaxis()->SetTitle("X");
+    f1->SetMinimum(-1000);
+    f1->SetMaximum(1000);
     auto f2 = make_unique<TGraph>(window_size);
-    f2->SetTitle("Waveform");
-    f2->GetXaxis()->SetTitle("Num");
-    f2->GetYaxis()->SetTitle("X");
-    f2->SetMinimum(-1);
-    f2->SetMaximum(1);
-    c1->Divide(1, 2);
+    f2->SetTitle("Y");
+    f2->GetXaxis()->SetTitle("Time");
+    f2->GetYaxis()->SetTitle("Y");
+    f2->SetMinimum(-1000);
+    f2->SetMaximum(1000);
+
+    auto f3 = make_unique<TGraph>(window_size);
+    f3->SetTitle("Z");
+    f3->GetXaxis()->SetTitle("Time");
+    f3->GetYaxis()->SetTitle("Z");
+    f3->SetMinimum(50);
+    f3->SetMaximum(1800);
+
+    c1->Divide(1, 3);
     c1->cd(1);
     f1->Draw();
     c1->cd(2);
     f2->Draw();
+    c1->cd(3);
+    f3->Draw();
 
     thread th(UPDATE_GRAPHS, ref(cref));
     th.detach();
@@ -106,46 +123,49 @@ int main(int argc, char* argv[]) {
         Create_Customization();
     }
 
-    Seeker seeker(window_size);
+    Seeker seeker;
+    Forecaster::datasize = size_t(window_size);
 
     while (1)
     {
         video.read(BGR_frame);
-        // cout << BGR_frame.size << endl;
         cvtColor(BGR_frame, HSV_frame, COLOR_BGR2HSV);
         inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
-        
         bool found = seeker.findObject(Out_ptr, BGR_ptr);
-
-        vector<double> xdata = seeker.getXData();
-        vector<double> ydata = seeker.getYData();
-        int pxX = seeker.get_pxX();
-        int pxY = seeker.get_pxY();
-        int pxDiameter = seeker.get_pxDiameter();
-
-        ball.setXPos(pxX);
-        ball.setYPos(pxY);
-        ball.setZDiameter(pxDiameter);
-        ball.calculateZRealPos();
-        ball.calculateXRealPos(FRAME_WIDTH, FRAME_HEIGHT);
-        ball.calculateYRealPos(FRAME_WIDTH, FRAME_HEIGHT);
-
-        float xRealPos = ball.getXRealPos();
-        float yRealPos = ball.getYRealPos();
-        float ZRealPos = ball.getZRealPos();
-
         if (found) {
-            seeker.drawObject(BGR_ptr,xRealPos, yRealPos, ZRealPos, pxX, pxY);
+            int pxX = seeker.get_pxX();
+            int pxY = seeker.get_pxY();
+            int pxDiameter = seeker.get_pxDiameter();
+
+            ball.setXPos(pxX);
+            ball.setYPos(pxY);
+            ball.setZDiameter(pxDiameter);
+            ball.calculateZRealPos();
+            ball.calculateXRealPos(FRAME_WIDTH, FRAME_HEIGHT);
+            ball.calculateYRealPos(FRAME_WIDTH, FRAME_HEIGHT);
+
+            float xRealPos = ball.getXRealPos();
+            float yRealPos = ball.getYRealPos();
+            float zRealPos = ball.getZRealPos();
+
+            seeker.drawObject(BGR_ptr,xRealPos, yRealPos, zRealPos, pxX, pxY);
+
+            Forecaster::addData(xRealPos, yRealPos, zRealPos);
+
+            vector <double> XData = Forecaster::getXData();
+            vector <double> YData = Forecaster::getYData();
+            vector <double> ZData = Forecaster::getZData();
+
+            for(size_t i=0; i<XData.size() ;i++) {
+                f1->SetPoint(i, i, XData[i]*1000);
+                f2->SetPoint(i, i, YData[i]*1000);
+                f3->SetPoint(i, i, ZData[i]*1000);
+            };
         };
 
-        // ball.calculateXRealPos()
-        for(size_t i=0;i<window_size;i++) {
-            f1->SetPoint(i, xdata[i], ydata[i]);
-        };
-        // c1->cd(1);
-        // c1->Update();
         imshow("Cam", BGR_frame);
         imshow("Customization", Output_frame);
+
         if (waitKey(15) >= 0)
         {
             break;

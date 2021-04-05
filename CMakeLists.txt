@@ -21,7 +21,7 @@ include(${ROOT_USE_FILE})
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 # include_directories(${ARMADILLO_INCLUDE_DIRS})
-add_executable(Computer_Vision Computer_Vision.cpp Seeker.cpp Seeker.hpp Ball.cpp Ball.hpp Forecaster.cpp Forecaster.hpp)
+add_executable(Computer_Vision Computer_Vision.cpp Seeker.cpp Seeker.hpp Ball.cpp Ball.hpp Forecaster.hpp Forecaster.cpp)
 
 target_link_libraries(Computer_Vision ${OpenCV_LIBS})
 #target_link_libraries(Computer_Vision ${ARMADILLO_LIBRARIES})

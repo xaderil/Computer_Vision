@@ -21,7 +21,7 @@ Ball::Ball(string Color) {
 	if (Color == "green") {
 
 		setHSVmin(Scalar(60, 70, 70));
-		setHSVmax(Scalar(170, 256, 256));
+		setHSVmax(Scalar(100, 256, 256));
 
 	};
 };
@@ -87,20 +87,17 @@ Scalar Ball::getHSVmax() {
 void Ball::calculateXRealPos(int Frame_Width, int Frame_Height) {
 	float Cu = Frame_Width/2;
 	this->XRealPos = ((xPos-Cu)/f)*ZRealPos;
-	cout << xPos << endl;
 };
 /// Нахождение реального Y объекта
 void Ball::calculateYRealPos(int Frame_Width, int Frame_Height) {
 	float Cv = Frame_Height/2;
 	this->YRealPos = ((yPos-Cv)/f)*ZRealPos;
-	cout << yPos << endl;
 };
 
 /// Нахождение реального Z объекта
 void Ball::calculateZRealPos() {
 	float Z = (1/(this->zDiameter))*(this->f)*(this->d);
 	this->ZRealPos = Z;
-	// cout << Z << endl;
 };
 
 float Ball::getXRealPos() {

@@ -1,13 +1,14 @@
 #include "Seeker.hpp"
 
 const int Seeker::MIN_OBJECT_AREA = 20 * 20;
+vector<Point> Seeker::circle_contour = {Point(100, 100), Point(200,100), Point(200, 200), Point(100, 200)};
 
 
 /// В конструкторе инициализируем массивы для графиков
 Seeker::Seeker() {
 };
 /// Поиск объекта, определение его границ и координат центра
-bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame) {
+bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WIDTH, int FRAME_HEIGHT) {
 
 	// Поиск контура
 	Output_frame->copyTo(frame);
@@ -47,27 +48,38 @@ bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame) {
 		/// Если площадь объекта больше минимальной, то запоминаем и отрисовываем контур
 		if (Max_area > MIN_OBJECT_AREA)
 		{	
+
 			// СonvexHull контура
 			vector< vector<Point> > hull(contours.size());
 			convexHull(contours[Max_area_index], hull[Max_area_index]);
-
-			// Поиск и отрисовка прямоугольника, получение его меньшей стороны
-			Point2f vtx[4];
-			RotatedRect box = minAreaRect(hull[Max_area_index]);
-			box.points(vtx);
-			for (int i = 0; i < 4; i++) {
-				line(*BGR_frame, vtx[i], vtx[(i + 1) % 4], Scalar(0, 255, 0), 1, LINE_AA);
-			};
-			float RotRectWidth = box.size.width;
-			float RotRectHeight = box.size.height; 
-			float smallest_side = min(RotRectHeight, RotRectWidth);
-
-
-			this->pxX = xPos[Max_area_index];
-			this->pxY = yPos[Max_area_index];
-			this->pxDiameter = smallest_side;
 			this->contour = hull[Max_area_index];
-			return true;
+
+			// Проверка на близость с границей
+			bool notAroundBorder = checkContourBorder(FRAME_WIDTH, FRAME_HEIGHT);
+
+			if (notAroundBorder) {
+				// Поиск и отрисовка прямоугольника, получение его меньшей стороны
+				RotatedRect box = minAreaRect(hull[Max_area_index]);
+				box.points(this->vtx);
+				// this->rectPoints = {vtx[0], vtx[1], vtx[2]}; 
+				for (int i = 0; i < 4; i++) {
+					line(*BGR_frame, vtx[i], vtx[(i + 1) % 4], Scalar(0, 255, 0), 1, LINE_AA);
+				};
+				float RotRectWidth = box.size.width;
+				float RotRectHeight = box.size.height; 
+				float smallest_side = min(RotRectHeight, RotRectWidth);
+
+				this->pxX = xPos[Max_area_index];
+				this->pxY = yPos[Max_area_index];
+				this->pxDiameter = smallest_side;
+
+				return true;
+
+			} else {
+
+				return false;
+				
+			};
 		
 		} 
 		else 
@@ -90,15 +102,19 @@ void Seeker::drawObject(Mat *BGR_frame, float xPos, float yPos, float zPos, int 
 	putText(*BGR_frame, to_string(int(xPos*1000)) + " , " + to_string(int(yPos*1000)) + " , " + to_string(int(zPos*1000)), Point(xPosPx, yPosPx + 20), 1, 1, Scalar(255, 255, 0));
 };
 
-
-/// Методы работы с приватными членами класса
-
-// vector<double> Seeker::getYData() {
-// 	return this->ydata;
-// };
-// vector<double> Seeker::getXData() {
-// 	return this->xdata;
-// };
+/// Возврат FALSE если контур мячика возле границы кадра
+bool Seeker::checkContourBorder(int FRAME_WIDTH, int FRAME_HEIGHT) {
+	for (Point point : this->contour) {
+		if (abs((point.x) - FRAME_WIDTH) < 3 || abs((point.y) - FRAME_HEIGHT) < 3) {
+			return false;
+		} else if (abs((point.x) - FRAME_WIDTH) > (FRAME_WIDTH-3) || abs((point.y) - FRAME_HEIGHT) > (FRAME_HEIGHT-3)) {
+			return false;
+		} else {
+			continue;
+		}
+	};
+	return true;
+};
 
 int Seeker::get_pxX() {
 	return this->pxX;
@@ -111,6 +127,4 @@ int Seeker::get_pxDiameter() {
 };
 
 
-
-//// То, от чего нужно будет избавиться
 

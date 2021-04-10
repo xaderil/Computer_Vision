@@ -9,9 +9,12 @@ size_t Forecaster::datasize = 0;
 // Заполнение массива данных X. Сначала заполняем нули числами, потом сдвигаем влево 
 void Forecaster::addData (double X, double Y, double Z){
     if (num_of_chart_data == (datasize)) {
-        Forecaster::vectorRotateLeft(Forecaster::XData, X);
-        Forecaster::vectorRotateLeft(Forecaster::YData, Y);
-        Forecaster::vectorRotateLeft(Forecaster::ZData, Z);
+        Forecaster::XData->erase(XData->cbegin());
+        Forecaster::YData->erase(YData->cbegin());
+        Forecaster::ZData->erase(ZData->cbegin());
+        Forecaster::XData->push_back(X);
+        Forecaster::YData->push_back(Y);
+        Forecaster::ZData->push_back(Z);
     }
     else {
         Forecaster::XData->push_back(X);
@@ -32,17 +35,4 @@ vector<double> Forecaster::getYData() {
 
 vector<double> Forecaster::getZData() {
     return *(Forecaster::ZData);
-};
-
-/// Сдвиг данных влево
-void Forecaster::vectorRotateLeft(vector<double>* data, double num)
-{
-    try {
-    for(std::size_t i = 0; i < data->size()-1; i++) {
-    (*data)[i] = (*data)[i+1];
-    (*data)[data->size()-1] = num;
-    };
-    } catch (exception err) {
-        cout << err.what() << endl;
-    }
 };

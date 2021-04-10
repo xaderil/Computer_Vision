@@ -72,25 +72,25 @@ int main(int argc, char* argv[]) {
     TCanvas* c1 = new TCanvas("c1", "Data");
     TCanvas & cref = (*c1);
     c1->SetWindowSize(960, 960);
-    auto f1 = make_unique<TGraph>(window_size);
+    auto f1 = make_unique<TGraph>(2);
     f1->SetTitle("X");
     f1->GetXaxis()->SetTitle("Time");
     f1->GetYaxis()->SetTitle("X");
-    f1->SetMinimum(-1000);
-    f1->SetMaximum(1000);
-    auto f2 = make_unique<TGraph>(window_size);
+    f1->SetMinimum(-500);
+    f1->SetMaximum(500);
+    auto f2 = make_unique<TGraph>(2);
     f2->SetTitle("Y");
     f2->GetXaxis()->SetTitle("Time");
     f2->GetYaxis()->SetTitle("Y");
-    f2->SetMinimum(-1000);
-    f2->SetMaximum(1000);
+    f2->SetMinimum(-500);
+    f2->SetMaximum(500);
 
-    auto f3 = make_unique<TGraph>(window_size);
+    auto f3 = make_unique<TGraph>(2);
     f3->SetTitle("Z");
     f3->GetXaxis()->SetTitle("Time");
     f3->GetYaxis()->SetTitle("Z");
     f3->SetMinimum(50);
-    f3->SetMaximum(1800);
+    f3->SetMaximum(1100);
 
     c1->Divide(1, 3);
     c1->cd(1);
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
         video.read(BGR_frame);
         cvtColor(BGR_frame, HSV_frame, COLOR_BGR2HSV);
         inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
-        bool found = seeker.findObject(Out_ptr, BGR_ptr);
+        bool found = seeker.findObject(Out_ptr, BGR_ptr, FRAME_WIDTH, FRAME_HEIGHT);
         if (found) {
             int pxX = seeker.get_pxX();
             int pxY = seeker.get_pxY();

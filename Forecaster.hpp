@@ -10,8 +10,6 @@ public:
 
     static int num_of_chart_data;
     static size_t datasize;
-
-    static void vectorRotateLeft(vector<double>* data, double num); // В дальнейшем избавиться 
     
     static void addData(double X, double Y, double Z);
     static vector<double> getXData();

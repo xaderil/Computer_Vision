@@ -11,19 +11,20 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /home/maxon/root-6.22.08-install/cmak
 # set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
 # set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wall")
 find_package(OpenCV REQUIRED)
-#find_package(Armadillo REQUIRED)
 
 find_package(ROOT REQUIRED)
-# find_package(Boost CONFIG REQUIRED regex system filesystem)
-
+find_package(Boost REQUIRED COMPONENTS regex system filesystem)
+if(Boost_FOUND)
+    message(STATUS ${Boost_VERSION} )
+endif()
 
 include(${ROOT_USE_FILE})
-
 include_directories(${OpenCV_INCLUDE_DIRS})
-# include_directories(${ARMADILLO_INCLUDE_DIRS})
+
 add_executable(Computer_Vision Computer_Vision.cpp Seeker.cpp Seeker.hpp Ball.cpp Ball.hpp Forecaster.hpp Forecaster.cpp)
 
 target_link_libraries(Computer_Vision ${OpenCV_LIBS})
-#target_link_libraries(Computer_Vision ${ARMADILLO_LIBRARIES})
+target_link_libraries(Computer_Vision Boost::regex Boost::filesystem
+                          Boost::system)
 target_link_libraries(Computer_Vision ${ROOT_LIBRARIES})
 

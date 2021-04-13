@@ -5,9 +5,13 @@
 // ROOT Libraries
 #include "TCanvas.h"
 #include "TGraph.h"
+#include "TMultiGraph.h"
 #include "TApplication.h"
 #include "TAxis.h"
 #include "TSystem.h"
+#include "TDatime.h"
+#include "TStyle.h"
+#include "TStopwatch.h"
 // Project Headers
 #include "Seeker.hpp"
 #include "Ball.hpp"
@@ -15,12 +19,12 @@
 
 using namespace std::chrono;
 
-constexpr int window_size = 50; 
+constexpr int window_size = 50;
 int NUM_OF_CAMERA = 0;
 bool CUSTOMIZATION = true;
 string COLOR = "green";
 int FRAME_WIDTH = 1280;
-int FRAME_HEIGHT = 720; 
+int FRAME_HEIGHT = 720;
 
 int H_MIN = 0;
 int H_MAX = 256;
@@ -35,10 +39,6 @@ cv::Mat Output_frame;
 cv::Mat* Out_ptr = &Output_frame;
 cv::Mat* BGR_ptr = &BGR_frame;
 
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-};
 /// Обновление графиков в отдельном потоке
 void UPDATE_GRAPHS(TCanvas &c1) {
     while(1) {
@@ -66,40 +66,78 @@ void Create_Customization() {
     createTrackbar("F_Coeff", "Customization", &Ball::f, 1500, 0);
 };
 int main(int argc, char* argv[]) {
+
     // ROOT PLOTS INIT
     TApplication rootapp("spectrum", &argc, argv);
-    // auto c1 = make_unique<TCanvas>("c1", "Data");
-    TCanvas* c1 = new TCanvas("c1", "Data");
-    TCanvas & cref = (*c1);
-    c1->SetWindowSize(960, 960);
-    auto f1 = make_unique<TGraph>(2);
-    f1->SetTitle("X");
-    f1->GetXaxis()->SetTitle("Time");
-    f1->GetYaxis()->SetTitle("X");
-    f1->SetMinimum(-500);
-    f1->SetMaximum(500);
-    auto f2 = make_unique<TGraph>(2);
-    f2->SetTitle("Y");
-    f2->GetXaxis()->SetTitle("Time");
-    f2->GetYaxis()->SetTitle("Y");
-    f2->SetMinimum(-500);
-    f2->SetMaximum(500);
+   //set time offset
+    TDatime dtime;
+    gStyle->SetTimeOffset(dtime.Convert());
 
-    auto f3 = make_unique<TGraph>(2);
-    f3->SetTitle("Z");
-    f3->GetXaxis()->SetTitle("Time");
-    f3->GetYaxis()->SetTitle("Z");
-    f3->SetMinimum(50);
-    f3->SetMaximum(1100);
+
+    auto c1 = new TCanvas("c1", "Data");
+         c1->SetWindowSize(960, 960);
+         c1->SetGrid();
+    
+
+    auto mg1 = new TMultiGraph("X во времени","X from time");
+         mg1->GetXaxis()->SetTitle("Time");
+         mg1->GetYaxis()->SetTitle("X");
+
+    auto mg2 = new TMultiGraph("Y во времени","Y from time");
+         mg2->GetXaxis()->SetTitle("Time");
+         mg2->GetYaxis()->SetTitle("Y");
+         mg2->GetXaxis()->SetTimeDisplay(1);
+         mg2->GetXaxis()->SetTimeFormat("%S");
+
+    auto mg3 = new TMultiGraph("Z во времени","Z from time");
+         mg3->GetXaxis()->SetTitle("Time");
+         mg3->GetYaxis()->SetTitle("Z");
+
+    auto f1 = new TGraph(2);
+         f1->SetName("Реальная координата X");
+         f1->SetLineColor(2);
+         f1->SetLineWidth(2);
+
+    auto f1_forecast = new TGraph(2);
+         f1_forecast->SetName("Прогнозная координата X");
+         f1_forecast->SetLineColor(4);
+         f1_forecast->SetLineWidth(2);
+
+    auto f2 = new TGraph(2);
+         f1_forecast->SetName("Реальная координата Y");
+         f2->SetLineColor(2);
+         f2->SetLineWidth(2);
+
+    auto f2_forecast = new TGraph(2);
+         f2_forecast->SetName("Прогнозная координата Y");
+         f2_forecast->SetLineColor(4);
+         f2_forecast->SetLineWidth(2);
+
+    auto f3 = new TGraph(2);
+         f3->SetName("Реальная координата Z");
+         f3->SetLineColor(2);
+         f3->SetLineWidth(2);
+
+    auto f3_forecast = new TGraph(2);
+         f3_forecast->SetName("Прогнозная координата Z");
+         f3_forecast->SetLineColor(4);
+         f3_forecast->SetLineWidth(2);
 
     c1->Divide(1, 3);
     c1->cd(1);
-    f1->Draw();
+    mg1->Add(f1 );
+    mg1->Add(f1_forecast);
+    mg1->Draw("AL");
     c1->cd(2);
-    f2->Draw();
+    mg2->Add(f2);
+    mg2->Add(f2_forecast);
+    mg2->Draw("AL");
     c1->cd(3);
-    f3->Draw();
+    mg3->Add(f3);
+    mg3->Add(f3_forecast);
+    mg3->Draw("AL");
 
+    TCanvas & cref = (*c1);
     thread th(UPDATE_GRAPHS, ref(cref));
     th.detach();
 
@@ -147,7 +185,7 @@ int main(int argc, char* argv[]) {
             float xRealPos = ball.getXRealPos();
             float yRealPos = ball.getYRealPos();
             float zRealPos = ball.getZRealPos();
-
+            auto start = std::chrono::steady_clock::now();
             seeker.drawObject(BGR_ptr,xRealPos, yRealPos, zRealPos, pxX, pxY);
 
             Forecaster::addData(xRealPos, yRealPos, zRealPos);
@@ -158,8 +196,11 @@ int main(int argc, char* argv[]) {
 
             for(size_t i=0; i<XData.size() ;i++) {
                 f1->SetPoint(i, i, XData[i]*1000);
+                f1_forecast->SetPoint(i, i, XData[i]*1000-20);
                 f2->SetPoint(i, i, YData[i]*1000);
+                f2_forecast->SetPoint(i, i, YData[i]*1000-20);
                 f3->SetPoint(i, i, ZData[i]*1000);
+                f3_forecast->SetPoint(i, i, ZData[i]*1000-20);
             };
         };
 
@@ -172,5 +213,5 @@ int main(int argc, char* argv[]) {
         }
     }
     return 0;
-    
+
 };

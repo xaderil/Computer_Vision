@@ -24,7 +24,7 @@ public:
 
 
 private:
-
+    static vector<double>* Time;
     static vector<double>* XData;
     static vector<double>* YData;
     static vector<double>* ZData;

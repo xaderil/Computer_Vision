@@ -80,7 +80,6 @@ bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WID
 				return false;
 				
 			};
-		
 		} 
 		else 
 		{

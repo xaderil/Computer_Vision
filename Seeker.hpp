@@ -5,7 +5,6 @@
 #include <opencv2/imgproc.hpp>
 #include <string>
 #include <iostream>
-#include <stdio.h>
 using namespace std;
 using namespace cv;
 // using namespace sciplot;

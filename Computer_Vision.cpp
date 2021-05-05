@@ -128,13 +128,13 @@ int main(int argc, char* argv[]) {
      double forecast_step = forecast_distance*2/window_size;
 
      c1->Divide(1, 3);
-     c1->cd(1);
      mg1->Add(f1 );
+     c1->cd(1);
      mg1->Add(f1_forecast);
      mg1->Draw("AL");
      c1->cd(2);
-     mg2->Add(f2);
      mg2->Add(f2_forecast);
+     mg2->Add(f2);
      mg2->Draw("AL");
      c1->cd(3);
      mg3->Add(f3);
@@ -166,7 +166,7 @@ int main(int argc, char* argv[]) {
      }
 
      Seeker seeker;
-
+     double time = 0;
      while (1)
      {
           video.read(BGR_frame);
@@ -192,37 +192,52 @@ int main(int argc, char* argv[]) {
                seeker.drawObject(BGR_ptr,xRealPos, yRealPos, zRealPos, pxX, pxY);
 
                chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
-               chrono::duration<double, std::milli> yee = ms - start_time_ms; 
+               chrono::duration<double, std::milli> current_time = ms - start_time_ms; 
 
-               Forecaster::addData(xRealPos, yRealPos, zRealPos, yee.count());
+               Forecaster::addData(xRealPos, yRealPos, zRealPos, current_time.count());
                
+               double diff = current_time.count() - time;
+               cout << diff << endl;
+
                vector <double> Time_Axis = Forecaster::getTime_Data();
                
-               Forecaster::makeForecast(yee.count(), Time_Axis[0]);
+               bool similar_time_axis = Forecaster::compareTimeAxis();
+
+               Forecaster::makeForecast(current_time.count(), Time_Axis[0], similar_time_axis);
 
                vector <double> XData = Forecaster::getXData();
                vector <double> YData = Forecaster::getYData();
                vector <double> ZData = Forecaster::getZData();
-
+               time = current_time.count();
                vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
                vector <double> YData_Forecasted = Forecaster::getYData_Forecasted();
                vector <double> ZData_Forecasted = Forecaster::getZData_Forecasted();
 
-    
+
                vector <double> Time_Axis_Forecast = Forecaster::getTime_Data_Forecast();
 
-               cout << XData_Forecasted.size() << endl;
+               
+               // cout << XData_Forecasted.size() << endl;
+
                for(int i=0; i<XData.size() ;i++) {
-                    f1->SetPoint(i, Time_Axis[i]-yee.count(), XData[i]*1000);
-                    f2->SetPoint(i, Time_Axis[i]-yee.count(), YData[i]*1000);
-                    f3->SetPoint(i, Time_Axis[i]-yee.count(), ZData[i]*1000);
+                    f1->SetPoint(i, Time_Axis[i]-current_time.count(), XData[i]*1000);
+                    f2->SetPoint(i, Time_Axis[i]-current_time.count(), YData[i]*1000);
+                    f3->SetPoint(i, Time_Axis[i]-current_time.count(), ZData[i]*1000);
                };
-               for(int i=0; i<XData_Forecasted.size() ;i++) {
-                    f1_forecast->SetPoint(i, Time_Axis_Forecast[i]-yee.count(), XData_Forecasted[i]*1000);
-                    f2_forecast->SetPoint(i, Time_Axis_Forecast[i]-yee.count(), YData_Forecasted[i]*1000);
-                    f3_forecast->SetPoint(i, Time_Axis_Forecast[i]-yee.count(), ZData_Forecasted[i]*1000);
+               // for(int i=0; i<XData_Forecasted.size() ;i++) {
+               //      f1_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), XData_Forecasted[i]*1000);
+               //      f2_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), YData_Forecasted[i]*1000);
+               //      f3_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), ZData_Forecasted[i]*1000);
+               // };
+          } else {
+               // Nullify all data
+               for(int i=Forecaster::num_of_chart_data; i>0 ;i--) {
+                    f1->RemovePoint(i);
+                    f2->RemovePoint(i);
+                    f3->RemovePoint(i);
                };
-          };
+               Forecaster::setToZeroData();
+          }
 
           imshow("Cam", BGR_frame);
           imshow("Customization", Output_frame);

@@ -10,7 +10,7 @@ public:
 
     static int num_of_chart_data;
     static size_t datasize;
-    static int forecast_distance; // In milliseconds 
+    static int forecast_distance; // Milliseconds 
     
     static vector<double> getTime_Data();
     static vector<double> getTime_Data_Forecast();
@@ -18,15 +18,15 @@ public:
     static void resizeTimeForecast();
 
     static void addData(double X, double Y, double Z, double time);
+    static void setToZeroData();
+
     static vector<double> getXData();
-
-    static void addYData(double Y);
     static vector<double> getYData();
-
-    static void addZData(double Z);
     static vector<double> getZData();
 
-    static void makeForecast(double time, double first_real);
+    static void makeForecast(double time, double first_real, bool time_difference);
+    static bool compareTimeAxis(); // Check a differece between first points of time
+    
 
     static vector<double> getXData_Forecasted();
     static vector<double> getYData_Forecasted();

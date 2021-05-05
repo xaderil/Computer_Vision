@@ -17,7 +17,7 @@ vector<double>* Forecaster::Time_Data_Forecast = new vector<double>;
 
 // Заполнение массива данных X. Сначала заполняем нули числами, потом сдвигаем влево 
 void Forecaster::addData (double X, double Y, double Z, double time){
-    if (num_of_chart_data == (datasize/2)) {
+    if (num_of_chart_data == (datasize)) {
         Forecaster::XData->erase(XData->cbegin());
         Forecaster::YData->erase(YData->cbegin());
         Forecaster::ZData->erase(ZData->cbegin());
@@ -38,6 +38,14 @@ void Forecaster::addData (double X, double Y, double Z, double time){
     };
 };
 
+void Forecaster::setToZeroData() {
+    Forecaster::num_of_chart_data = 0;
+    Forecaster::XData->resize(0);
+    Forecaster::YData->resize(0);
+    Forecaster::ZData->resize(0);
+    Forecaster::Time_Data->resize(0);
+
+}
 
 vector<double> Forecaster::getXData() {
     return *(Forecaster::XData);
@@ -71,31 +79,50 @@ vector<double> Forecaster::getTime_Data_Forecast() {
     return *(Forecaster::Time_Data_Forecast);
 };
 
-void Forecaster::makeForecast(double time, double time_first_real) {
+void Forecaster::makeForecast(double time, double time_first_real, bool time_differece) {
 
+    // if  (XData_Forecasted->size() == datasize) {
 
-    if  (XData_Forecasted->size() == datasize) {
-        auto yee = *(XData_Forecasted);
-        XData_Forecasted->erase(XData_Forecasted->cbegin());
-        YData_Forecasted->erase(YData_Forecasted->cbegin());
-        ZData_Forecasted->erase(ZData_Forecasted->cbegin());
+    //     XData_Forecasted->erase(XData_Forecasted->cbegin());
+    //     YData_Forecasted->erase(YData_Forecasted->cbegin());
+    //     ZData_Forecasted->erase(ZData_Forecasted->cbegin());
 
-        XData_Forecasted->push_back(XData[0][0]);
-        YData_Forecasted->push_back(XData[0][0]);
-        ZData_Forecasted->push_back(XData[0][0]);
+    //     XData_Forecasted->push_back(XData[0][0]);
+    //     YData_Forecasted->push_back(XData[0][0]);
+    //     ZData_Forecasted->push_back(XData[0][0]);
 
-
-    } else {
-        XData_Forecasted->push_back(XData[0][0]);
-        YData_Forecasted->push_back(YData[0][0]);
-        ZData_Forecasted->push_back(ZData[0][0]);
-        // Time_Data_Forecast->push_back(time + forecast_distance);
-    };
+    // } else {
+    //     XData_Forecasted->push_back(XData[0][0]);
+    //     YData_Forecasted->push_back(YData[0][0]);
+    //     ZData_Forecasted->push_back(ZData[0][0]);
+    //     // Time_Data_Forecast->push_back(time + forecast_distance);
+    // };
     
-        Time_Data_Forecast->push_back(time + forecast_distance);
-        Time_Data_Forecast->erase(Time_Data_Forecast->cbegin());
+    //     Time_Data_Forecast->push_back(time + forecast_distance);
+    //     Time_Data_Forecast->erase(Time_Data_Forecast->cbegin());
 }
 
+bool Forecaster::compareTimeAxis() {
+
+    // if ((Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0]) > 50) {
+        
+    //     cout << "true" << endl;
+    //     double hui = Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0];
+    //     cout << hui << endl;
+    //     return true;
+
+    // } else {
+    //     cout << "false" << endl;
+    //     double hui = Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0];
+    //     cout << hui << endl;
+    //     return false;
+    // };
+
+};
+
+
 void Forecaster::resizeTimeForecast() {
+
     Forecaster::Time_Data_Forecast->resize(datasize);
+
 }

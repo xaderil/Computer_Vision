@@ -3,6 +3,7 @@
 int Forecaster::num_of_chart_data = 0;
 size_t Forecaster::datasize = 0;
 int Forecaster::forecast_distance = 0;
+int Forecaster::forecast_counter = 0;
 
 vector<double>* Forecaster::XData = new vector<double>;
 vector<double>* Forecaster::YData = new vector<double>;
@@ -38,12 +39,17 @@ void Forecaster::addData (double X, double Y, double Z, double time){
     };
 };
 
-void Forecaster::setToZeroData() {
+void Forecaster::nullifyData() {
     Forecaster::num_of_chart_data = 0;
     Forecaster::XData->resize(0);
     Forecaster::YData->resize(0);
     Forecaster::ZData->resize(0);
     Forecaster::Time_Data->resize(0);
+
+    Forecaster::XData_Forecasted->resize(0);
+    Forecaster::YData_Forecasted->resize(0);
+    Forecaster::ZData_Forecasted->resize(0);
+    Forecaster::Time_Data_Forecast->resize(0);
 
 }
 
@@ -79,8 +85,68 @@ vector<double> Forecaster::getTime_Data_Forecast() {
     return *(Forecaster::Time_Data_Forecast);
 };
 
-void Forecaster::makeForecast(double time, double time_first_real, bool time_differece) {
+void Forecaster::makeForecast(double time, double time_first_real) {
 
+    
+    if (num_of_chart_data == datasize) {
+
+        forecast_counter++;
+
+        if (forecast_counter == 1) {
+
+            for (int i = 0; i < datasize; i++) {
+
+                XData_Forecasted->push_back(XData[0][i]);
+                YData_Forecasted->push_back(YData[0][i]);
+                ZData_Forecasted->push_back(ZData[0][i]);
+                Time_Data_Forecast->push_back(Time_Data[0][i] + forecast_distance);
+
+            };
+
+        } else {
+
+            bool similar_time_axis = compareTimeAxis();
+
+            if (!similar_time_axis) {
+
+                XData_Forecasted->push_back(XData[0][datasize-1]);
+                YData_Forecasted->push_back(YData[0][datasize-1]);
+                ZData_Forecasted->push_back(ZData[0][datasize-1]);
+                Time_Data_Forecast->push_back(Time_Data[0][datasize-1] + forecast_distance);
+                // cout << "False axis" << endl;
+                // for (int i = 0; i < XData_Forecasted->size(); i++) {
+                //     cout << XData_Forecasted[0][i] << " ";
+                // };
+
+
+            } else {
+
+                XData_Forecasted->erase(XData_Forecasted->cbegin());
+                YData_Forecasted->erase(YData_Forecasted->cbegin());
+                ZData_Forecasted->erase(ZData_Forecasted->cbegin());
+                Time_Data_Forecast->erase(Time_Data_Forecast->cbegin());
+                
+                XData_Forecasted->push_back(XData[0][datasize-1]);
+                YData_Forecasted->push_back(XData[0][datasize-1]);
+                ZData_Forecasted->push_back(XData[0][datasize-1]);
+                Time_Data_Forecast->push_back(Time_Data[0][datasize-1] + forecast_distance);
+
+                // for (int i = 0; i < XData_Forecasted->size(); i++) {
+                //     cout << XData_Forecasted[0][i] << " ";
+                // };
+                // cout << endl;
+
+                // cout << "True axus" << endl;
+                
+            };
+
+        }
+    };
+
+
+    // } else {
+    //     cout << "Мало данных для прогноза" << endl;
+    // };
     // if  (XData_Forecasted->size() == datasize) {
 
     //     XData_Forecasted->erase(XData_Forecasted->cbegin());
@@ -100,29 +166,29 @@ void Forecaster::makeForecast(double time, double time_first_real, bool time_dif
     
     //     Time_Data_Forecast->push_back(time + forecast_distance);
     //     Time_Data_Forecast->erase(Time_Data_Forecast->cbegin());
-}
+};
 
 bool Forecaster::compareTimeAxis() {
 
-    // if ((Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0]) > 50) {
-        
-    //     cout << "true" << endl;
-    //     double hui = Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0];
-    //     cout << hui << endl;
-    //     return true;
+    if (Time_Data_Forecast->size() != 0) {
 
-    // } else {
-    //     cout << "false" << endl;
-    //     double hui = Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0];
-    //     cout << hui << endl;
-    //     return false;
-    // };
+        if ((Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0]) < 50) {
+            
+            cout << "true" << endl;
+            double yee = Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0];
+            cout << yee << endl;
+            return true;
+
+        } else {
+            cout << "false" << endl;
+            double yee = Forecaster::Time_Data_Forecast[0][0] - Forecaster::Time_Data[0][0];
+            cout << yee << endl;
+            return false;
+        };
+
+    } else {
+        return false;
+    };
 
 };
 
-
-void Forecaster::resizeTimeForecast() {
-
-    Forecaster::Time_Data_Forecast->resize(datasize);
-
-}

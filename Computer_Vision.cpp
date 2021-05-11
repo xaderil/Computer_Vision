@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <chrono>
 #include <thread>
+#include <fstream>
 // ROOT Libraries
 #include "TCanvas.h"
 #include "TGraph.h"
@@ -12,6 +13,8 @@
 #include "TDatime.h"
 #include "TStyle.h"
 #include "TStopwatch.h"
+// nlohmann JSON
+#include "json.hpp"
 // Project Headers
 #include "Seeker.hpp"
 #include "Ball.hpp"
@@ -20,7 +23,7 @@
 using namespace std::chrono;
 
 constexpr int window_size = 30;
-constexpr double forecast_distance = 1700; // ms
+constexpr double forecast_distance = 1000; // ms
 int NUM_OF_CAMERA = 0;
 bool CUSTOMIZATION = true;
 string COLOR = "green";
@@ -69,7 +72,7 @@ int main(int argc, char* argv[]) {
 
      Forecaster::datasize = size_t(window_size);
      Forecaster::forecast_distance = forecast_distance;
-     Forecaster::resizeTimeForecast();
+     // Forecaster::resizeTimeForecast();
 
      // ROOT PLOTS INIT
      TApplication rootapp("spectrum", &argc, argv);
@@ -196,14 +199,12 @@ int main(int argc, char* argv[]) {
 
                Forecaster::addData(xRealPos, yRealPos, zRealPos, current_time.count());
                
-               double diff = current_time.count() - time;
-               cout << diff << endl;
+               // double diff = current_time.count() - time;
+               // cout << diff << endl;
 
                vector <double> Time_Axis = Forecaster::getTime_Data();
                
-               bool similar_time_axis = Forecaster::compareTimeAxis();
-
-               Forecaster::makeForecast(current_time.count(), Time_Axis[0], similar_time_axis);
+               Forecaster::makeForecast(current_time.count(), Time_Axis[0]);
 
                vector <double> XData = Forecaster::getXData();
                vector <double> YData = Forecaster::getYData();
@@ -213,10 +214,8 @@ int main(int argc, char* argv[]) {
                vector <double> YData_Forecasted = Forecaster::getYData_Forecasted();
                vector <double> ZData_Forecasted = Forecaster::getZData_Forecasted();
 
-
                vector <double> Time_Axis_Forecast = Forecaster::getTime_Data_Forecast();
-
-               
+ 
                // cout << XData_Forecasted.size() << endl;
 
                for(int i=0; i<XData.size() ;i++) {
@@ -229,14 +228,31 @@ int main(int argc, char* argv[]) {
                //      f2_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), YData_Forecasted[i]*1000);
                //      f3_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), ZData_Forecasted[i]*1000);
                // };
+
+               nlohmann::json j{};
+               j["Time_Axis_Forecast"] = Time_Axis;
+               j["XData"] = XData;
+               j["YData"] = YData;
+               j["ZData"] = ZData;
+               
+               std::ofstream file("Time.json");
+               file << j;
+
           } else {
+
                // Nullify all data
                for(int i=Forecaster::num_of_chart_data; i>0 ;i--) {
                     f1->RemovePoint(i);
                     f2->RemovePoint(i);
                     f3->RemovePoint(i);
                };
-               Forecaster::setToZeroData();
+               vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
+               for (int i = XData_Forecasted.size(); i > 0; i--) {
+                    f1_forecast->RemovePoint(i);
+                    f2_forecast->RemovePoint(i);
+                    f3_forecast->RemovePoint(i);
+               }
+               Forecaster::nullifyData();
           }
 
           imshow("Cam", BGR_frame);

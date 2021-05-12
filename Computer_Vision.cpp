@@ -5,6 +5,7 @@
 #define NUM_OF_CAMERA 0
 #define FORECAST_DISTANCE 1000
 #define WINDOW_SIZE 30
+#define GRAPHS_TYPE 1 // 0 - FLAT, 1 - SPATIAL
 
 // Standard Libraries
 #include <stdint.h>
@@ -36,18 +37,29 @@ cv::Mat* Out_ptr = &Output_frame;
 cv::Mat* BGR_ptr = &BGR_frame;
 
 /// Обновление графиков в отдельном потоке
-void UPDATE_GRAPHS(TCanvas &c1) {
-    while(1) {
-        c1.cd(1);
-        c1.Update();
-        c1.Pad()->Draw();
-        c1.cd(2);
-        c1.Update();
-        c1.Pad()->Draw();
-        c1.cd(3);
-        c1.Update();
-        c1.Pad()->Draw();
-    }
+void UPDATE_GRAPHS(TCanvas &c1, TGraph2D& g) {
+    if (GRAPHS_TYPE == 0) {
+
+        while(1) {
+            c1.cd(1);
+            c1.Update();
+            c1.Pad()->Draw();
+            c1.cd(2);
+            c1.Update();
+            c1.Pad()->Draw();
+            c1.cd(3);
+            c1.Update();
+            c1.Pad()->Draw();
+        }
+
+    } else {
+        while (1) {
+                g.Draw("line");
+                c1.cd();
+                c1.Update();
+                this_thread::sleep_for(milliseconds(70));
+        }
+    };
 };
 /// Создание окна кастомизации
 void Create_Customization() {
@@ -66,16 +78,25 @@ int main(int argc, char* argv[]) {
      Forecaster::datasize = size_t(WINDOW_SIZE);
      Forecaster::forecast_distance = FORECAST_DISTANCE;
      
-     Monitoring Monitoring(argc, argv, FORECAST_DISTANCE);
+     Monitoring Monitoring(argc, argv, FORECAST_DISTANCE, GRAPHS_TYPE);
 
      //set time offset
      chrono::milliseconds start_time_ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
 
      double forecast_step = FORECAST_DISTANCE*2/FORECAST_DISTANCE;
+   
+     if (GRAPHS_TYPE == 0) {
+        TCanvas & cref = *(Monitoring.c1);
+        TGraph2D & gref = *(Monitoring.g);
+        thread th(UPDATE_GRAPHS, ref(cref), ref(gref));
+        th.detach();
+     } else {
+        TCanvas & cref = *(Monitoring.c);
+        TGraph2D & gref = *(Monitoring.g);
+        thread th(UPDATE_GRAPHS, ref(cref), ref(gref));
+        th.detach();
+     };
 
-     TCanvas & cref = *(Monitoring.c1);
-     thread th(UPDATE_GRAPHS, ref(cref));
-     th.detach();
 
      // Take properties of ball color
      Ball ball(COLOR);
@@ -146,7 +167,7 @@ int main(int argc, char* argv[]) {
                vector <double> Time_Axis_Forecast = Forecaster::getTime_Data_Forecast();
 
                Monitoring.setPointsToCurrentData(XData, YData, ZData, Time_Axis, current_time);
-               Monitoring.setPointsToForecastedData(XData_Forecasted,YData_Forecasted, ZData_Forecasted, Time_Axis_Forecast, current_time);
+            //    Monitoring.setPointsToForecastedData(XData_Forecasted,YData_Forecasted, ZData_Forecasted, Time_Axis_Forecast, current_time);
                
                JSON_Worker.setData(Time_Axis, XData, YData, ZData, current_time.count());
                JSON_Worker.generateFile("../Matlab_Checker/Data.json");

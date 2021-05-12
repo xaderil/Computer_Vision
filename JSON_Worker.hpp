@@ -7,9 +7,7 @@
 class JSON_Worker {
 
 public:
-    JSON_Worker() : JSON_Data(new nlohmann::json){
-        std::cout << "JSON initialized" << std::endl; 
-    };
+    JSON_Worker() : JSON_Data(new nlohmann::json) {};
 
     void setData(std::vector <double> Time_Axis, std::vector <double> XData, std::vector <double> YData, std::vector <double> ZData, double current_time) 
     {
@@ -26,5 +24,4 @@ public:
     };
 
     nlohmann::json* JSON_Data;
-
 };

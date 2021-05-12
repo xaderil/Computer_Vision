@@ -133,11 +133,6 @@ void Monitoring::setPointsToCurrentData(vector <double> XData, vector <double> Y
         };
     }; 
 };
-
-
-
-
-
     
 void Monitoring::setPointsToForecastedData(vector <double> XData_Forecasted, vector <double> YData_Forecasted, vector <double> ZData_Forecasted, vector <double> Time_Axis_Forecast, chrono::duration<double, std::milli> current_time) {
     for(int i=0; i<XData_Forecasted.size() ;i++) {
@@ -146,7 +141,6 @@ void Monitoring::setPointsToForecastedData(vector <double> XData_Forecasted, vec
         f3_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), ZData_Forecasted[i]*1000);
     };
 };
-
 
 void Monitoring::updateGraphs(Monitoring & Monitoring) {
     if (plot_type == 0) {

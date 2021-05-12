@@ -1,7 +1,7 @@
 #include "Monitoring.hpp"
+int Monitoring::plot_type = 0;
 
-
-Monitoring::Monitoring(int argc, char* argv[], double forecast_distance, int plot_type) : plot_type(plot_type) {
+Monitoring::Monitoring(int argc, char* argv[], double forecast_distance, int plot_type) {
 
     if (plot_type == 0) { // Flat plots
 
@@ -144,5 +144,31 @@ void Monitoring::setPointsToForecastedData(vector <double> XData_Forecasted, vec
         f1_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), XData_Forecasted[i]*1000);
         f2_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), YData_Forecasted[i]*1000);
         f3_forecast->SetPoint(i, Time_Axis_Forecast[i]-current_time.count(), ZData_Forecasted[i]*1000);
+    };
+};
+
+
+void Monitoring::updateGraphs(Monitoring & Monitoring) {
+    if (plot_type == 0) {
+
+        while(1) {
+            Monitoring.c1->cd(1);
+            Monitoring.c1->Update();
+            Monitoring.c1->Pad()->Draw();
+            Monitoring.c1->cd(2);
+            Monitoring.c1->Update();
+            Monitoring.c1->Pad()->Draw();
+            Monitoring.c1->cd(3);
+            Monitoring.c1->Update();
+            Monitoring.c1->Pad()->Draw();
+        }
+
+    } else {
+        while (1) {
+            Monitoring.g->Draw("line");
+            Monitoring.c->cd();
+            Monitoring.c->Update();
+            this_thread::sleep_for(std::chrono::milliseconds(70));
+        }
     };
 };

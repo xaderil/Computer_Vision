@@ -10,14 +10,15 @@
 #include <stdint.h>
 #include <chrono>
 #include <thread>
-#include <fstream>
+#include <boost/asio.hpp>
 // nlohmann JSON
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 // Project Headers
 #include "Seeker.hpp"
 #include "Ball.hpp"
 #include "Forecaster.hpp"
 #include "Monitoring.hpp"
+#include "JSON_Worker.hpp"
 
 using namespace std::chrono;
 
@@ -61,6 +62,7 @@ void Create_Customization() {
 };
 int main(int argc, char* argv[]) {
 
+     JSON_Worker JSON_Worker;
      Forecaster::datasize = size_t(WINDOW_SIZE);
      Forecaster::forecast_distance = FORECAST_DISTANCE;
      
@@ -136,7 +138,7 @@ int main(int argc, char* argv[]) {
                vector <double> XData = Forecaster::getXData();
                vector <double> YData = Forecaster::getYData();
                vector <double> ZData = Forecaster::getZData();
-               time = current_time.count();
+               time = current_time.count(); 
                vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
                vector <double> YData_Forecasted = Forecaster::getYData_Forecasted();
                vector <double> ZData_Forecasted = Forecaster::getZData_Forecasted();
@@ -145,16 +147,11 @@ int main(int argc, char* argv[]) {
 
                Monitoring.setPointsToCurrentData(XData, YData, ZData, Time_Axis, current_time);
                Monitoring.setPointsToForecastedData(XData_Forecasted,YData_Forecasted, ZData_Forecasted, Time_Axis_Forecast, current_time);
-
-
-               nlohmann::json j{};
-               j["Time_Axis_Forecast"] = Time_Axis;
-               j["XData"] = XData;
-               j["YData"] = YData;
-               j["ZData"] = ZData;
                
-               std::ofstream file("Time.json");
-               file << j;
+               JSON_Worker.setData(Time_Axis, XData, YData, ZData, current_time.count());
+               JSON_Worker.generateFile("../Matlab_Checker/Data.json");
+
+
 
           } else {
 

@@ -3,7 +3,7 @@
 #include <vector>
 #include <chrono>
 
-#include "TCanvas.h"
+#include <TCanvas.h>
 #include "TGraph.h"
 #include "TMultiGraph.h"
 #include "TApplication.h"

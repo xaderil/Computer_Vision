@@ -5,10 +5,8 @@
 #define NUM_OF_CAMERA 0
 #define FORECAST_DISTANCE 1000
 #define WINDOW_SIZE 30
-#define GRAPHS_TYPE 1 // 0 - FLAT, 1 - SPATIAL
+#define GRAPHS_TYPE 0 // 0 - FLAT, 1 - SPATIAL
 
-// Standard Libraries
-#include <boost/asio.hpp>
 // Project Headers
 #include "Seeker.hpp"
 #include "Ball.hpp"
@@ -18,27 +16,25 @@
 
 using namespace std::chrono;
 
-        /// НА УДАЛЕНИЕ
-        int H_MIN = 0;
-        int H_MAX = 256;
-        int S_MIN = 0;
-        int S_MAX = 256;
-        int V_MIN = 0;
-        int V_MAX = 256;
+                            /// DELETE IN FUTURE
+                            int H_MIN = 0;
+                            int H_MAX = 256;
+                            int S_MIN = 0;
+                            int S_MAX = 256;
+                            int V_MIN = 0;
+                            int V_MAX = 256;
 
-        cv::Mat BGR_frame;
-        cv::Mat HSV_frame;
-        cv::Mat Output_frame;
-        cv::Mat* Out_ptr = &Output_frame;
-        cv::Mat* BGR_ptr = &BGR_frame;
-        ///
+                            cv::Mat BGR_frame;
+                            cv::Mat HSV_frame;
+                            cv::Mat Output_frame;
+                            cv::Mat* Out_ptr = &Output_frame;
+                            cv::Mat* BGR_ptr = &BGR_frame;
+                            ///
 
 
 void Create_Customization();
 
 int main(int argc, char* argv[]) {
-
-    JSON_Worker JSON_Worker;
 
     Forecaster::datasize = size_t(WINDOW_SIZE);
     Forecaster::forecast_distance = FORECAST_DISTANCE;
@@ -56,15 +52,15 @@ int main(int argc, char* argv[]) {
 
     Seeker seeker;
 
-        // Take properties of ball color  /// Почистить кусок
-        Ball ball(COLOR);
-        H_MIN = ball.getHSVmin()[0];
-        H_MAX = ball.getHSVmax()[0];
-        S_MIN = ball.getHSVmin()[1];
-        S_MAX = ball.getHSVmax()[1];
-        V_MIN = ball.getHSVmin()[2];
-        V_MAX = ball.getHSVmax()[2];
-        ///
+                // Take properties of ball color  /// Почистить кусок
+                Ball ball(COLOR);
+                H_MIN = ball.getHSVmin()[0];
+                H_MAX = ball.getHSVmax()[0];
+                S_MIN = ball.getHSVmin()[1];
+                S_MAX = ball.getHSVmax()[1];
+                V_MIN = ball.getHSVmin()[2];
+                V_MAX = ball.getHSVmax()[2];
+                ///
 
     VideoCapture video(0);
     video.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M', 'J', 'P', 'G'));
@@ -76,6 +72,7 @@ int main(int argc, char* argv[]) {
          Create_Customization();    
      }
 
+    bool trajectory_found_ever = 0;
     double time = 0;
     while (1)
     {
@@ -84,7 +81,7 @@ int main(int argc, char* argv[]) {
         inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
         bool found = seeker.findObject(Out_ptr, BGR_ptr, FRME_WIDTH, FRME_HEIGHT);
         if (found) {
-
+            trajectory_found_ever = 1;
             int pxX = seeker.get_pxX();
             int pxY = seeker.get_pxY();
             int pxDiameter = seeker.get_pxDiameter();
@@ -127,28 +124,41 @@ int main(int argc, char* argv[]) {
             Monitor.setPointsToCurrentData(XData, YData, ZData, Time_Axis, current_time);
         //    Monitoring.setPointsToForecastedData(XData_Forecasted,YData_Forecasted, ZData_Forecasted, Time_Axis_Forecast, current_time);
             
-            JSON_Worker.setData(Time_Axis, XData, YData, ZData, current_time.count());
-            JSON_Worker.generateFile("../Matlab_Checker/Data.json");
-
 
 
         } else {
+            
+            if (trajectory_found_ever) {
+                trajectory_found_ever = 0;
 
+                chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
+                chrono::duration<double, std::milli> current_time = ms - start_time_ms; 
+                vector <double> XData = Forecaster::getXData();
+                vector <double> YData = Forecaster::getYData();
+                vector <double> ZData = Forecaster::getZData();
+                vector <double> Time_Axis = Forecaster::getTime_Data();
+
+                JSON_Worker::setCurrentDynamicData(Time_Axis, XData, YData, ZData, current_time.count());
+                JSON_Worker::generateFileWithDynamicMetroData("../Matlab_Checker/Data.json");
+                JSON_Worker::ball_trajectory_counter++;
+                
+            }
+            
             // Nullify all data
             vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
             Monitor.nullifyAllData(Forecaster::num_of_chart_data, XData_Forecasted.size());
             Forecaster::nullifyData();
-        }
+        };
 
         imshow("Cam", BGR_frame);
         imshow("Customization", Output_frame);
 
-        if (waitKey(15) >= 0)
-        {
+        if (waitKey(15) >= 0) {
             break;
-        }
-        }
-        return 0;
+        };
+    };
+    
+    return 0;
 
 };
 
@@ -162,4 +172,5 @@ void Create_Customization() {
     createTrackbar("V_MIN", "Customization", &V_MIN, 256, 0);
     createTrackbar("V_MAX", "Customization", &V_MAX, 256, 0);
     createTrackbar("F_Coeff", "Customization", &Ball::f, 1500, 0);
+    createTrackbar("Data recording", "Customization", &JSON_Worker::static_data_Recording_Flag, 1, 0);
 };

@@ -1,5 +1,6 @@
 build/
 cmake/
 .vscode/
-nlohmann/json
+nlohmann/
+json.hpp
 Data.json

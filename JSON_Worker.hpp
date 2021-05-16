@@ -4,24 +4,23 @@
 #include <fstream>
 #include "nlohmann/json.hpp"
 
-class JSON_Worker {
+class JSON_Worker { 
 
 public:
-    JSON_Worker() : JSON_Data(new nlohmann::json) {};
 
-    void setData(std::vector <double> Time_Axis, std::vector <double> XData, std::vector <double> YData, std::vector <double> ZData, double current_time) 
-    {
-        (*JSON_Data)["Time_Axis"] = Time_Axis;
-        (*JSON_Data)["XData"] = XData;
-        (*JSON_Data)["YData"] = YData;
-        (*JSON_Data)["ZData"] = ZData;
-        (*JSON_Data)["Current_Time"] = current_time;
-    };
+    static void            setCurrentDynamicData(std::vector <double> Time_Axis, 
+                                                 std::vector <double> XData, 
+                                                 std::vector <double> YData, 
+                                                 std::vector <double> ZData, 
+                                                              double  current_time);
+    static void            generateFileWithDynamicMetroData(std::string path);
+    static void            recordStaticMetroData();
+    static void            generateFileWithStaticMetroData(std::string path);
 
-    void generateFile(std::string path) {
-        std::ofstream file(path);
-        file << *(JSON_Data);
-    };
-
-    nlohmann::json* JSON_Data;
+    static int             static_data_Recording_Flag;
+    static int           ball_trajectory_counter;
+private:
+    static nlohmann::json* JSON_Static_Data;
+    static nlohmann::json* JSON_Dynamic_Data;
 };
+

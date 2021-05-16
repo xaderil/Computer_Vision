@@ -73,6 +73,7 @@ int main(int argc, char* argv[]) {
      }
 
     bool trajectory_found_ever = 0;
+    bool static_record_switched = 0;
     double time = 0;
     while (1)
     {
@@ -81,6 +82,7 @@ int main(int argc, char* argv[]) {
         inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
         bool found = seeker.findObject(Out_ptr, BGR_ptr, FRME_WIDTH, FRME_HEIGHT);
         if (found) {
+
             trajectory_found_ever = 1;
             int pxX = seeker.get_pxX();
             int pxY = seeker.get_pxY();
@@ -123,12 +125,36 @@ int main(int argc, char* argv[]) {
 
             Monitor.setPointsToCurrentData(XData, YData, ZData, Time_Axis, current_time);
         //    Monitoring.setPointsToForecastedData(XData_Forecasted,YData_Forecasted, ZData_Forecasted, Time_Axis_Forecast, current_time);
+
+            if (JSON_Worker::static_data_Recording_Flag) {
+                
+                static_record_switched = 1;
+
+                ball.staticXData.push_back(ball.getXRealPos());
+                ball.staticYData.push_back(ball.getYRealPos());
+                ball.staticZData.push_back(ball.getZRealPos());
+            } else {
+                if (static_record_switched) {
+
+                    JSON_Worker::setCurrentStaticMetroData(ball.staticXData, ball.staticYData, ball.staticZData);
+                    JSON_Worker::generateFileWithStaticMetroData("../Matlab_Checker/StaticData.json");
+                    JSON_Worker::ball_static_record_counter++;
+                    static_record_switched = 0;
+
+                    ball.staticXData.resize(0);
+                    ball.staticYData.resize(0);
+                    ball.staticZData.resize(0);
+                };
+
+            };
+            
             
 
 
         } else {
             
             if (trajectory_found_ever) {
+
                 trajectory_found_ever = 0;
 
                 chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
@@ -139,11 +165,11 @@ int main(int argc, char* argv[]) {
                 vector <double> Time_Axis = Forecaster::getTime_Data();
 
                 JSON_Worker::setCurrentDynamicData(Time_Axis, XData, YData, ZData, current_time.count());
-                JSON_Worker::generateFileWithDynamicMetroData("../Matlab_Checker/Data.json");
+                JSON_Worker::generateFileWithDynamicMetroData("../Matlab_Checker/Trajectories.json");
                 JSON_Worker::ball_trajectory_counter++;
                 
             }
-            
+
             // Nullify all data
             vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
             Monitor.nullifyAllData(Forecaster::num_of_chart_data, XData_Forecasted.size());

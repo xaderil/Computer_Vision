@@ -41,10 +41,15 @@ public:
 	void          setHSVmin(Scalar min);
 	void          setHSVmax(Scalar max);
 
+	vector <double> staticXData;
+	vector <double> staticYData;
+	vector <double> staticZData;
+
 private:
 
-	float         xPos, yPos, zDiameter, XRealPos, YRealPos, ZRealPos;
-	string        Color;
-	Scalar        HSVmin, HSVmax;
+	float         	xPos, yPos, zDiameter, XRealPos, YRealPos, ZRealPos;
+	string        	Color;
+	Scalar        	HSVmin, HSVmax;
+
 };
 

@@ -7,12 +7,14 @@
 #define WINDOW_SIZE 30
 #define GRAPHS_TYPE 0 // 0 - FLAT, 1 - SPATIAL
 
+#include "opencv2/calib3d.hpp"
 // Project Headers
 #include "Seeker.hpp"
 #include "Ball.hpp"
 #include "Forecaster.hpp"
 #include "Monitoring.hpp"
 #include "JSON_Worker.hpp"
+
 
 using namespace std::chrono;
 
@@ -27,8 +29,6 @@ using namespace std::chrono;
                             cv::Mat BGR_frame;
                             cv::Mat HSV_frame;
                             cv::Mat Output_frame;
-                            cv::Mat* Out_ptr = &Output_frame;
-                            cv::Mat* BGR_ptr = &BGR_frame;
                             ///
 
 
@@ -75,12 +75,23 @@ int main(int argc, char* argv[]) {
     bool trajectory_found_ever = 0;
     bool static_record_switched = 0;
     double time = 0;
+
+    double m[3][3] = {{939.74, 0, 644.63}, {0, 938.12, 366.32}, {0, 0, 1}};
+    Mat cameraMatrix = Mat(3,3, CV_64F, m);
+
+    double distcoef[4] = {0.0117, -0.2445,0.0034, 0.0102};
+    Mat distCoefs = Mat(1,4, CV_64F, distcoef);
+
+    Mat BGR_Undistorted;
     while (1)
     {
         video.read(BGR_frame);
+
+        // undistort(BGR_frame, BGR_Undistorted, cameraMatrix, distCoefs);
+
         cvtColor(BGR_frame, HSV_frame, COLOR_BGR2HSV);
         inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
-        bool found = seeker.findObject(Out_ptr, BGR_ptr, FRME_WIDTH, FRME_HEIGHT);
+        bool found = seeker.findObject(&Output_frame, &BGR_frame, FRME_WIDTH, FRME_HEIGHT);
         if (found) {
 
             trajectory_found_ever = 1;
@@ -99,7 +110,7 @@ int main(int argc, char* argv[]) {
             float yRealPos = ball.getYRealPos();
             float zRealPos = ball.getZRealPos();
             auto start = std::chrono::steady_clock::now();
-            seeker.drawObject(BGR_ptr,xRealPos, yRealPos, zRealPos, pxX, pxY);
+            seeker.drawObject(&BGR_frame,xRealPos, yRealPos, zRealPos, pxX, pxY);
 
             chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
             chrono::duration<double, std::milli> current_time = ms - start_time_ms; 

@@ -2,36 +2,25 @@
 
 int Ball::f = 940; 
 
+int Ball::H_MIN = 0;
+int Ball::H_MAX = 256;
+int Ball::S_MIN = 0;
+int Ball::S_MAX = 256;
+int Ball::V_MIN = 0;
+int Ball::V_MAX = 256;
+
+
 Ball::Ball(string Color) {
 
-	this->Color = Color;
+	try {
+		JSON_Worker::readHSV();
+	} catch (exception err) {
+		JSON_Worker::writeHSVFile();
+	}
 
-	if (Color == "blue") {
 
-		setHSVmin(Scalar(60, 50, 20));
-		setHSVmax(Scalar(120, 256, 256));
-
-	};
-	if (Color == "red") {
-
-		setHSVmin(Scalar(0, 70, 20));
-		setHSVmax(Scalar(50, 256, 256));
-
-	};
-	if (Color == "green") {
-
-		setHSVmin(Scalar(60, 70, 70));
-		setHSVmax(Scalar(100, 256, 256));
-
-	};
 };
 
-void Ball::setHSVmin(Scalar min) {
-	this->HSVmin = min;
-};
-void Ball::setHSVmax(Scalar max) {
-	this->HSVmax = max;
-};
 
 int Ball::getXPos() {
 	return this->xPos;
@@ -72,16 +61,6 @@ void Ball::setZRealPos(int z) {
 	this->ZRealPos = z;
 };
 
-
-Scalar Ball::getHSVmin() {
-
-	return this->HSVmin;
-
-}
-Scalar Ball::getHSVmax() {
-
-	return this->HSVmax;
-}
 
 /// Нахождение реального X объекта
 void Ball::calculateXRealPos(int Frame_Width, int Frame_Height) {

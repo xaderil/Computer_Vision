@@ -18,14 +18,6 @@
 
 using namespace std::chrono;
 
-                            /// DELETE IN FUTURE
-                            int H_MIN = 0;
-                            int H_MAX = 256;
-                            int S_MIN = 0;
-                            int S_MAX = 256;
-                            int V_MIN = 0;
-                            int V_MAX = 256;
-
                             cv::Mat BGR_frame;
                             cv::Mat HSV_frame;
                             cv::Mat Output_frame;
@@ -52,15 +44,7 @@ int main(int argc, char* argv[]) {
 
     Seeker seeker;
 
-                // Take properties of ball color  /// Почистить кусок
-                Ball ball(COLOR);
-                H_MIN = ball.getHSVmin()[0];
-                H_MAX = ball.getHSVmax()[0];
-                S_MIN = ball.getHSVmin()[1];
-                S_MAX = ball.getHSVmax()[1];
-                V_MIN = ball.getHSVmin()[2];
-                V_MAX = ball.getHSVmax()[2];
-                ///
+    Ball ball(COLOR);
 
     VideoCapture video(0);
     video.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M', 'J', 'P', 'G'));
@@ -90,7 +74,7 @@ int main(int argc, char* argv[]) {
         // undistort(BGR_frame, BGR_Undistorted, cameraMatrix, distCoefs);
 
         cvtColor(BGR_frame, HSV_frame, COLOR_BGR2HSV);
-        inRange(HSV_frame, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), Output_frame);
+        inRange(HSV_frame, Scalar(Ball::H_MIN, Ball::S_MIN, Ball::V_MIN), Scalar(Ball::H_MAX, Ball::S_MAX, Ball::V_MAX), Output_frame);
         bool found = seeker.findObject(&Output_frame, &BGR_frame, FRME_WIDTH, FRME_HEIGHT);
         if (found) {
 
@@ -202,12 +186,12 @@ int main(int argc, char* argv[]) {
 /// Создание окна кастомизации
 void Create_Customization() {
     namedWindow("Customization", WINDOW_AUTOSIZE);
-    createTrackbar("H_MIN", "Customization", &H_MIN, 256, 0);
-    createTrackbar("H_MAX", "Customization", &H_MAX, 256, 0);
-    createTrackbar("S_MIN", "Customization", &S_MIN, 256, 0);
-    createTrackbar("S_MAX", "Customization", &S_MAX, 256, 0);
-    createTrackbar("V_MIN", "Customization", &V_MIN, 256, 0);
-    createTrackbar("V_MAX", "Customization", &V_MAX, 256, 0);
-    createTrackbar("F_Coeff", "Customization", &Ball::f, 1500, 0);
+    createTrackbar("H_MIN", "Customization", &Ball::H_MIN, 256, JSON_Worker::rewriteHSVData);
+    createTrackbar("H_MAX", "Customization", &Ball::H_MAX, 256, JSON_Worker::rewriteHSVData);
+    createTrackbar("S_MIN", "Customization", &Ball::S_MIN, 256, JSON_Worker::rewriteHSVData);
+    createTrackbar("S_MAX", "Customization", &Ball::S_MAX, 256, JSON_Worker::rewriteHSVData);
+    createTrackbar("V_MIN", "Customization", &Ball::V_MIN, 256, JSON_Worker::rewriteHSVData);
+    createTrackbar("V_MAX", "Customization", &Ball::V_MAX, 256, JSON_Worker::rewriteHSVData);
+    createTrackbar("F_Coeff", "Customization", &Ball::f, 1500, JSON_Worker::rewriteHSVData);
     createTrackbar("Data recording", "Customization", &JSON_Worker::static_data_Recording_Flag, 1, 0);
 };

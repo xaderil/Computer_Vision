@@ -2,9 +2,10 @@
 
 nlohmann::json* JSON_Worker::JSON_Static_Data             = new nlohmann::json;
 nlohmann::json* JSON_Worker::JSON_Dynamic_Data            = new nlohmann::json;
+nlohmann::json* JSON_Worker::JSON_HSV_Data                = new nlohmann::json;
 int             JSON_Worker::static_data_Recording_Flag   = 0;
 int             JSON_Worker::ball_trajectory_counter      = 1;
-int             JSON_Worker::ball_static_record_counter      = 1;
+int             JSON_Worker::ball_static_record_counter   = 1;
 
 void JSON_Worker::setCurrentDynamicData(std::vector <double> Time_Axis, 
                                         std::vector <double> XData, 
@@ -39,3 +40,37 @@ void JSON_Worker::generateFileWithStaticMetroData(std::string path) {
     file << *(JSON_Static_Data);
 
 };
+
+void JSON_Worker::rewriteHSVData(int num, void* data) {
+	
+
+    (*JSON_HSV_Data)["H_MIN"] = Ball::H_MIN;
+    (*JSON_HSV_Data)["H_MAX"] = Ball::H_MAX;
+    (*JSON_HSV_Data)["S_MIN"] = Ball::S_MIN;
+    (*JSON_HSV_Data)["S_MAX"] = Ball::S_MAX;
+    (*JSON_HSV_Data)["V_MIN"] = Ball::V_MIN;
+    (*JSON_HSV_Data)["V_MAX"] = Ball::V_MAX;
+    (*JSON_HSV_Data)["F"] = Ball::f;
+    writeHSVFile();
+
+};
+
+void JSON_Worker::writeHSVFile() {
+    std::ofstream file("HSV_Color_Data.json");
+    file << *(JSON_HSV_Data);
+}
+
+void JSON_Worker::readHSV() {
+
+    std::ifstream HSV_Data("HSV_Color_Data.json");
+    (*JSON_HSV_Data) << HSV_Data;
+    Ball::H_MIN = (*JSON_HSV_Data)["H_MIN"];
+    Ball::H_MAX = (*JSON_HSV_Data)["H_MAX"];
+    Ball::S_MIN = (*JSON_HSV_Data)["S_MIN"];
+    Ball::S_MAX = (*JSON_HSV_Data)["S_MAX"];
+    Ball::V_MIN = (*JSON_HSV_Data)["V_MIN"];
+    Ball::V_MAX = (*JSON_HSV_Data)["V_MAX"];
+    Ball::f = (*JSON_HSV_Data)["F"];
+
+};
+

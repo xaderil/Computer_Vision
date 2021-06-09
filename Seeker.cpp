@@ -12,6 +12,8 @@ bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WID
 
 	// Поиск контура
 	Output_frame->copyTo(frame);
+	contourPoints = 0;
+	contourPoints = Mat::zeros(BGR_frame->size().height, BGR_frame->size().width, CV_8UC1);
 	vector< vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	findContours(frame, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
@@ -99,8 +101,11 @@ void Seeker::drawObject(Mat *BGR_frame, float xPos, float yPos, float zPos, int 
 	drawContours(*BGR_frame, cont, 0, Scalar(0, 0, 255), 2, 8);
 	circle(*BGR_frame, Point(xPosPx, yPosPx), 3, cv::Scalar(0, 0, 255));
 	putText(*BGR_frame, to_string(int(xPos*1000)) + " , " + to_string(int(yPos*1000)) + " , " + to_string(int(zPos*1000)), Point(xPosPx, yPosPx + 20), 1, 1, Scalar(255, 255, 0));
+	
+	drawContours(contourPoints, cont, 0, Scalar(255, 255, 255), -1, 8);
+	findNonZero(contourPoints, nonZeroCoordinates);
 };
-
+	
 /// Возврат FALSE если контур мячика возле границы кадра
 bool Seeker::checkContourBorder(int FRAME_WIDTH, int FRAME_HEIGHT) {
 	for (Point point : this->contour) {
@@ -114,6 +119,13 @@ bool Seeker::checkContourBorder(int FRAME_WIDTH, int FRAME_HEIGHT) {
 	};
 	return true;
 };
+
+cv::Mat Seeker::getBallImage() {
+
+	return this->contourPoints;
+
+};
+
 
 int Seeker::get_pxX() {
 	return this->pxX;

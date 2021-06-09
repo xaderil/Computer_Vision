@@ -20,10 +20,12 @@ public:
 	static vector<Point>  circle_contour;
 	
 
-	cv::Mat 			  frame;
-	vector<Point> 		  contour;
+	Mat 			  	  frame;
+	Mat 			  	  contourPoints;
+	vector<Point> 	  	  contour;
+	Mat 				  nonZeroCoordinates;
+	Mat  			      contourPointsColored;
 	Point2f 			  vtx[4];
-
 	bool 				  findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WIDTH, int FRAME_HEIGHT);
 	void 				  drawObject(Mat *BGR_frame, float xPos, float yPos, float zPos, int xPosPx, int yPosPx);
 	bool 				  checkContourBorder(int FRAME_WIDTH, int FRAME_HEIGHT);
@@ -31,6 +33,7 @@ public:
 	int 				  get_pxX();
 	int 				  get_pxY();
 	int 				  get_pxDiameter();
+	Mat               	  getBallImage();
 	
 private:
 	int 				  pxX;

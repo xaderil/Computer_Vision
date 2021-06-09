@@ -6,6 +6,7 @@
 #define FORECAST_DISTANCE 1000
 #define WINDOW_SIZE 30
 #define GRAPHS_TYPE 0 // 0 - FLAT, 1 - SPATIAL
+#define EXECUTION_TYPE 1 // 0 - REAL TIME, 1 - DELAY FRAMES
 
 #include "opencv2/calib3d.hpp"
 // Project Headers
@@ -21,6 +22,10 @@ using namespace std::chrono;
                             cv::Mat BGR_frame;
                             cv::Mat HSV_frame;
                             cv::Mat Output_frame;
+                            cv::Mat Delay_frame;
+                            cv::Mat Difference;
+                            cv::Mat Previous_frame;
+                            Mat res;
                             ///
 
 
@@ -60,16 +65,21 @@ int main(int argc, char* argv[]) {
     bool static_record_switched = 0;
     double time = 0;
 
-    double m[3][3] = {{939.74, 0, 644.63}, {0, 938.12, 366.32}, {0, 0, 1}};
-    Mat cameraMatrix = Mat(3,3, CV_64F, m);
+            double m[3][3] = {{939.74, 0, 644.63}, {0, 938.12, 366.32}, {0, 0, 1}};
+            Mat cameraMatrix = Mat(3,3, CV_64F, m);
 
-    double distcoef[4] = {0.0117, -0.2445,0.0034, 0.0102};
-    Mat distCoefs = Mat(1,4, CV_64F, distcoef);
+            double distcoef[4] = {0.0117, -0.2445,0.0034, 0.0102};
+            Mat distCoefs = Mat(1,4, CV_64F, distcoef);
 
-    Mat BGR_Undistorted;
+            Mat BGR_Undistorted;
     while (1)
     {
         video.read(BGR_frame);
+        if (Delay_frame.empty()) {
+            BGR_frame.copyTo(Delay_frame);
+            BGR_frame.copyTo(Difference);
+            BGR_frame.copyTo(res);
+        };
 
         // undistort(BGR_frame, BGR_Undistorted, cameraMatrix, distCoefs);
 
@@ -77,7 +87,7 @@ int main(int argc, char* argv[]) {
         inRange(HSV_frame, Scalar(Ball::H_MIN, Ball::S_MIN, Ball::V_MIN), Scalar(Ball::H_MAX, Ball::S_MAX, Ball::V_MAX), Output_frame);
         bool found = seeker.findObject(&Output_frame, &BGR_frame, FRME_WIDTH, FRME_HEIGHT);
         if (found) {
-
+            
             trajectory_found_ever = 1;
             int pxX = seeker.get_pxX();
             int pxY = seeker.get_pxY();
@@ -119,6 +129,14 @@ int main(int argc, char* argv[]) {
             vector <double> Time_Axis_Forecast = Forecaster::getTime_Data_Forecast();
 
             Monitor.setPointsToCurrentData(XData, YData, ZData, Time_Axis, current_time);
+
+            Mat yee = seeker.getBallImage();
+            cout << yee.type() << "  " << yee.size() << endl;
+            Delay_frame = 0;
+            Delay_frame = Mat::zeros(720, 1280, CV_8UC1);
+            cout << Delay_frame.type() << "  " << Delay_frame.size() << endl;
+            yee.copyTo(Delay_frame);
+
         //    Monitoring.setPointsToForecastedData(XData_Forecasted,YData_Forecasted, ZData_Forecasted, Time_Axis_Forecast, current_time);
 
             if (JSON_Worker::static_data_Recording_Flag) {
@@ -142,8 +160,9 @@ int main(int argc, char* argv[]) {
                 };
 
             };
-            
-            
+
+
+            // addWeighted(Difference, 1, Delay_frame, 1, 0, Delay_frame);
 
 
         } else {
@@ -162,16 +181,31 @@ int main(int argc, char* argv[]) {
                 JSON_Worker::setCurrentDynamicData(Time_Axis, XData, YData, ZData, current_time.count());
                 JSON_Worker::generateFileWithDynamicMetroData("../Matlab_Checker/Trajectories.json");
                 JSON_Worker::ball_trajectory_counter++;
-                
+
             }
 
+
             // Nullify all data
+
             vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
             Monitor.nullifyAllData(Forecaster::num_of_chart_data, XData_Forecasted.size());
             Forecaster::nullifyData();
+
+            BGR_frame.copyTo(Delay_frame);
+            BGR_frame.copyTo(Previous_frame);
+            BGR_frame.copyTo(res);
         };
 
-        imshow("Cam", BGR_frame);
+        if (EXECUTION_TYPE == 0) {
+
+            imshow("Cam", BGR_frame);
+
+        } else {
+
+            imshow("Cam", Delay_frame);
+
+        };
+
         imshow("Customization", Output_frame);
 
         if (waitKey(15) >= 0) {

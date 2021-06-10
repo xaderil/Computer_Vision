@@ -2,6 +2,8 @@
 
 const int Seeker::MIN_OBJECT_AREA = 20 * 20;
 vector<Point> Seeker::circle_contour = {Point(100, 100), Point(200,100), Point(200, 200), Point(100, 200)};
+Mat Seeker::freezedTrajectory(720, 1280, CV_8UC3);
+Mat Seeker::freezedTrajectoryGrey(720, 1280, CV_8UC1);
 
 
 /// В конструкторе инициализируем массивы для графиков
@@ -13,7 +15,9 @@ bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WID
 	// Поиск контура
 	Output_frame->copyTo(frame);
 	contourPoints = 0;
-	contourPoints = Mat::zeros(BGR_frame->size().height, BGR_frame->size().width, CV_8UC1);
+	contourPoints = Mat::zeros(BGR_frame->size().height, BGR_frame->size().width, CV_8UC3);
+	contourPointsColored = Mat::zeros(BGR_frame->size().height, BGR_frame->size().width, CV_8UC3);
+
 	vector< vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	findContours(frame, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
@@ -47,14 +51,21 @@ bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WID
 		int Max_area_index = distance(areas.begin(), find(areas.begin(), areas.end(), Max_area));
 
 
-		/// Если площадь объекта больше минимальной, то запоминаем и отрисовываем контур
+		/// Если площадь объекта больше минимальной, то запоминаем контур
 		if (Max_area > MIN_OBJECT_AREA)
 		{	
 
 			// СonvexHull контура
 			vector< vector<Point> > hull(contours.size());
 			convexHull(contours[Max_area_index], hull[Max_area_index]);
+
 			this->contour = hull[Max_area_index];
+			vector<vector<Point>> cont = {contour};
+			drawContours(contourPoints, cont, 0, Scalar(255, 255, 255), -1, 8);
+			BGR_frame->copyTo(contourPointsColored, contourPoints);
+			contourPointsColored.copyTo(freezedTrajectory, contourPoints);
+			// bitwise_or(freezedTrajectory, freezedTrajectory1, freezedTrajectory);
+
 
 			// Проверка на близость с границей
 			bool notAroundBorder = checkContourBorder(FRAME_WIDTH, FRAME_HEIGHT);
@@ -63,10 +74,7 @@ bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WID
 				// Поиск и отрисовка прямоугольника, получение его меньшей стороны
 				RotatedRect box = minAreaRect(hull[Max_area_index]);
 				box.points(this->vtx);
-				// this->rectPoints = {vtx[0], vtx[1], vtx[2]}; 
-				for (int i = 0; i < 4; i++) {
-					line(*BGR_frame, vtx[i], vtx[(i + 1) % 4], Scalar(0, 255, 0), 1, LINE_AA);
-				};
+
 				float RotRectWidth = box.size.width;
 				float RotRectHeight = box.size.height; 
 				float smallest_side = min(RotRectHeight, RotRectWidth);
@@ -97,15 +105,32 @@ bool Seeker::findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WID
 
 /// Отрисовка контура объекта, центра, вставка текста
 void Seeker::drawObject(Mat *BGR_frame, float xPos, float yPos, float zPos, int xPosPx, int yPosPx) {
+	
 	vector<vector<Point>> cont = {contour};
 	drawContours(*BGR_frame, cont, 0, Scalar(0, 0, 255), 2, 8);
 	circle(*BGR_frame, Point(xPosPx, yPosPx), 3, cv::Scalar(0, 0, 255));
 	putText(*BGR_frame, to_string(int(xPos*1000)) + " , " + to_string(int(yPos*1000)) + " , " + to_string(int(zPos*1000)), Point(xPosPx, yPosPx + 20), 1, 1, Scalar(255, 255, 0));
-	
-	drawContours(contourPoints, cont, 0, Scalar(255, 255, 255), -1, 8);
-	findNonZero(contourPoints, nonZeroCoordinates);
+	for (int i = 0; i < 4; i++) {
+		line(*BGR_frame, vtx[i], vtx[(i + 1) % 4], Scalar(0, 255, 0), 1, LINE_AA);
+	};
 };
+
+/// Выделение в кадре только мяча (без фона)
+void Seeker::disableBackground(Mat* BGR_frame) {
+	BGR_frame->copyTo(contourPointsColored, contourPoints);
+	contourPointsColored.copyTo(*BGR_frame);
 	
+};
+
+
+void Seeker::enableFreezedTrajectory(Mat* BGR_frame) {
+
+	// findNonZero(freezedTrajectory, contourFreezedPoints);
+	cvtColor(freezedTrajectory, freezedTrajectoryGrey, 6);
+	freezedTrajectory.copyTo(*BGR_frame, freezedTrajectoryGrey);
+	
+};
+
 /// Возврат FALSE если контур мячика возле границы кадра
 bool Seeker::checkContourBorder(int FRAME_WIDTH, int FRAME_HEIGHT) {
 	for (Point point : this->contour) {
@@ -120,11 +145,6 @@ bool Seeker::checkContourBorder(int FRAME_WIDTH, int FRAME_HEIGHT) {
 	return true;
 };
 
-cv::Mat Seeker::getBallImage() {
-
-	return this->contourPoints;
-
-};
 
 
 int Seeker::get_pxX() {

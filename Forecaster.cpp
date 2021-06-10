@@ -8,6 +8,8 @@ int Forecaster::forecast_counter = 0;
 vector<double>* Forecaster::XData = new vector<double>;
 vector<double>* Forecaster::YData = new vector<double>;
 vector<double>* Forecaster::ZData = new vector<double>;
+vector<double>* Forecaster::UData = new vector<double>;
+vector<double>* Forecaster::VData = new vector<double>;
 
 vector<double>* Forecaster::XData_Forecasted = new vector<double>;
 vector<double>* Forecaster::YData_Forecasted = new vector<double>;
@@ -17,14 +19,18 @@ vector<double>* Forecaster::Time_Data = new vector<double>;
 vector<double>* Forecaster::Time_Data_Forecast = new vector<double>;
 
 // Заполнение массива данных X. Сначала заполняем нули числами, потом сдвигаем влево 
-void Forecaster::addData (double X, double Y, double Z, double time){
+void Forecaster::addData (double X, double Y, double Z, double U, double V, double time){
     if (num_of_chart_data == (datasize)) {
         Forecaster::XData->erase(XData->cbegin());
         Forecaster::YData->erase(YData->cbegin());
         Forecaster::ZData->erase(ZData->cbegin());
+        Forecaster::UData->erase(UData->cbegin());
+        Forecaster::VData->erase(VData->cbegin());
         Forecaster::XData->push_back(X);
         Forecaster::YData->push_back(Y);
         Forecaster::ZData->push_back(Z);
+        Forecaster::UData->push_back(U);
+        Forecaster::VData->push_back(V);
 
         Forecaster::Time_Data->erase(Time_Data->cbegin());
         Forecaster::Time_Data->push_back(time);
@@ -33,6 +39,8 @@ void Forecaster::addData (double X, double Y, double Z, double time){
         Forecaster::XData->push_back(X);
         Forecaster::YData->push_back(Y);
         Forecaster::ZData->push_back(Z);
+        Forecaster::UData->push_back(U);
+        Forecaster::VData->push_back(V);
 
         Forecaster::Time_Data->push_back(time);
         Forecaster::num_of_chart_data++;
@@ -44,6 +52,8 @@ void Forecaster::nullifyData() {
     Forecaster::XData->resize(0);
     Forecaster::YData->resize(0);
     Forecaster::ZData->resize(0);
+    Forecaster::UData->resize(0);
+    Forecaster::VData->resize(0);
     Forecaster::Time_Data->resize(0);
 
     Forecaster::XData_Forecasted->resize(0);
@@ -63,6 +73,14 @@ vector<double> Forecaster::getYData() {
 
 vector<double> Forecaster::getZData() {
     return *(Forecaster::ZData);
+};
+
+vector<double> Forecaster::getUData() {
+    return *(Forecaster::UData);
+};
+
+vector<double> Forecaster::getVData() {
+    return *(Forecaster::VData);
 };
 
 vector<double> Forecaster::getXData_Forecasted() {

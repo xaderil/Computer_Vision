@@ -18,22 +18,24 @@ public:
 	static const int      MIN_OBJECT_AREA;
 	static const int 	  MAX_OBJECT_AREA;
 	static vector<Point>  circle_contour;
-	
+	static Mat            freezedTrajectory;
+	static Mat            freezedTrajectoryGrey;
 
 	Mat 			  	  frame;
 	Mat 			  	  contourPoints;
-	vector<Point> 	  	  contour;
-	Mat 				  nonZeroCoordinates;
 	Mat  			      contourPointsColored;
+	Mat  			      contourFreezedPoints;
+	vector<Point> 	  	  contour;
 	Point2f 			  vtx[4];
 	bool 				  findObject(cv::Mat* Output_frame, cv::Mat* BGR_frame, int FRAME_WIDTH, int FRAME_HEIGHT);
 	void 				  drawObject(Mat *BGR_frame, float xPos, float yPos, float zPos, int xPosPx, int yPosPx);
 	bool 				  checkContourBorder(int FRAME_WIDTH, int FRAME_HEIGHT);
+	void				  disableBackground(Mat* BGR_frame);
+	void				  enableFreezedTrajectory(Mat* BGR_frame);
 	double 				  compareWithCircle();
 	int 				  get_pxX();
 	int 				  get_pxY();
 	int 				  get_pxDiameter();
-	Mat               	  getBallImage();
 	
 private:
 	int 				  pxX;

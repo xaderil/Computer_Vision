@@ -1,12 +1,13 @@
 #define FRME_HEIGHT 720
 #define FRME_WIDTH 1280
 #define COLOR "green"
-#define CUSTOMIZATION true
-#define NUM_OF_CAMERA 0
-#define FORECAST_DISTANCE 1000
-#define WINDOW_SIZE 30
+#define CUSTOMIZATION false
+#define NUM_OF_CAMERA 0 
+#define FORECAST_DISTANCE 1000 // IN MILLISECONDS
+#define WINDOW_SIZE 30 // POINTS IN EACH GRAPH
 #define GRAPHS_TYPE 0 // 0 - FLAT, 1 - SPATIAL
-#define EXECUTION_TYPE 1 // 0 - REAL TIME, 1 - DELAY FRAMES
+#define BACKGROUND 1 // 0 - DISABLED, 1 - ENABLED
+#define EXECUTION_TYPE 1 // 0 - REAL TIME, 1 - WITH FREEZED BALL TRAJECTORY
 
 #include "opencv2/calib3d.hpp"
 // Project Headers
@@ -22,17 +23,13 @@ using namespace std::chrono;
                             cv::Mat BGR_frame;
                             cv::Mat HSV_frame;
                             cv::Mat Output_frame;
-                            cv::Mat Delay_frame;
-                            cv::Mat Difference;
-                            cv::Mat Previous_frame;
-                            Mat res;
-                            ///
+                            cv::Mat Delay_Frame;
 
 
 void Create_Customization();
 
 int main(int argc, char* argv[]) {
-
+    
     Forecaster::datasize = size_t(WINDOW_SIZE);
     Forecaster::forecast_distance = FORECAST_DISTANCE;
 
@@ -41,7 +38,9 @@ int main(int argc, char* argv[]) {
 
     //set time offset
     chrono::milliseconds start_time_ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
-    
+
+    int pictureNum = 0;
+
     // Create another worker
     Monitoring & MonitoringRef = Monitor;
     thread th(Monitoring::updateGraphs, ref(MonitoringRef));
@@ -75,11 +74,6 @@ int main(int argc, char* argv[]) {
     while (1)
     {
         video.read(BGR_frame);
-        if (Delay_frame.empty()) {
-            BGR_frame.copyTo(Delay_frame);
-            BGR_frame.copyTo(Difference);
-            BGR_frame.copyTo(res);
-        };
 
         // undistort(BGR_frame, BGR_Undistorted, cameraMatrix, distCoefs);
 
@@ -104,15 +98,18 @@ int main(int argc, char* argv[]) {
             float yRealPos = ball.getYRealPos();
             float zRealPos = ball.getZRealPos();
             auto start = std::chrono::steady_clock::now();
-            seeker.drawObject(&BGR_frame,xRealPos, yRealPos, zRealPos, pxX, pxY);
-
+            if (EXECUTION_TYPE == 1) {
+                seeker.enableFreezedTrajectory(&BGR_frame);
+            }
+            if (BACKGROUND == 0) {
+                seeker.disableBackground(&BGR_frame);   
+            }
             chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
+            // seeker.drawObject(&BGR_frame,xRealPos, yRealPos, zRealPos, pxX, pxY);
             chrono::duration<double, std::milli> current_time = ms - start_time_ms; 
-
-            Forecaster::addData(xRealPos, yRealPos, zRealPos, current_time.count());
+            BGR_frame.copyTo(Delay_Frame);
+            Forecaster::addData(xRealPos, yRealPos, zRealPos, pxX, pxY, current_time.count());
             
-            // double diff = current_time.count() - time;
-            // cout << diff << endl;
 
             vector <double> Time_Axis = Forecaster::getTime_Data();
             
@@ -130,12 +127,6 @@ int main(int argc, char* argv[]) {
 
             Monitor.setPointsToCurrentData(XData, YData, ZData, Time_Axis, current_time);
 
-            Mat yee = seeker.getBallImage();
-            cout << yee.type() << "  " << yee.size() << endl;
-            Delay_frame = 0;
-            Delay_frame = Mat::zeros(720, 1280, CV_8UC1);
-            cout << Delay_frame.type() << "  " << Delay_frame.size() << endl;
-            yee.copyTo(Delay_frame);
 
         //    Monitoring.setPointsToForecastedData(XData_Forecasted,YData_Forecasted, ZData_Forecasted, Time_Axis_Forecast, current_time);
 
@@ -162,51 +153,45 @@ int main(int argc, char* argv[]) {
             };
 
 
-            // addWeighted(Difference, 1, Delay_frame, 1, 0, Delay_frame);
-
-
         } else {
             
             if (trajectory_found_ever) {
 
                 trajectory_found_ever = 0;
-
+                pictureNum++;
                 chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(system_clock::now().time_since_epoch());
                 chrono::duration<double, std::milli> current_time = ms - start_time_ms; 
                 vector <double> XData = Forecaster::getXData();
                 vector <double> YData = Forecaster::getYData();
                 vector <double> ZData = Forecaster::getZData();
+                vector <double> UData = Forecaster::getUData();
+                vector <double> VData = Forecaster::getVData();
                 vector <double> Time_Axis = Forecaster::getTime_Data();
 
-                JSON_Worker::setCurrentDynamicData(Time_Axis, XData, YData, ZData, current_time.count());
+                JSON_Worker::setCurrentDynamicData(Time_Axis, XData, YData, ZData, UData, VData, current_time.count());
                 JSON_Worker::generateFileWithDynamicMetroData("../Matlab_Checker/Trajectories.json");
                 JSON_Worker::ball_trajectory_counter++;
+                
+                // Nullify all data
+                seeker.freezedTrajectory.setTo(0);
+                vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
+                Monitor.nullifyAllData(Forecaster::num_of_chart_data, XData_Forecasted.size());
+                Forecaster::nullifyData();
+
+                if (EXECUTION_TYPE == 1) {
+                    string Name = "Pictures/trajectoryPicture" + to_string(pictureNum) + ".png";
+                    imwrite(Name, Delay_Frame);
+                }
 
             }
 
-
-            // Nullify all data
-
-            vector <double> XData_Forecasted = Forecaster::getXData_Forecasted();
-            Monitor.nullifyAllData(Forecaster::num_of_chart_data, XData_Forecasted.size());
-            Forecaster::nullifyData();
-
-            BGR_frame.copyTo(Delay_frame);
-            BGR_frame.copyTo(Previous_frame);
-            BGR_frame.copyTo(res);
         };
 
-        if (EXECUTION_TYPE == 0) {
+        imshow("Cam", BGR_frame);
 
-            imshow("Cam", BGR_frame);
-
-        } else {
-
-            imshow("Cam", Delay_frame);
-
-        };
-
-        imshow("Customization", Output_frame);
+        if (CUSTOMIZATION == 1) {
+            imshow("Customization", Output_frame);
+        }
 
         if (waitKey(15) >= 0) {
             break;

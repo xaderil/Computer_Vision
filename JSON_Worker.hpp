@@ -15,7 +15,9 @@ public:
     static void             setCurrentDynamicData(std::vector <double> Time_Axis, 
                                                   std::vector <double> XData, 
                                                   std::vector <double> YData, 
-                                                  std::vector <double> ZData, 
+                                                  std::vector <double> ZData,
+                                                  std::vector <double> UData, 
+                                                  std::vector <double> VData, 
                                                                double  current_time);
     static void             setCurrentStaticMetroData(std::vector <double> XStaticData, std::vector <double> YStaticData, std::vector <double> ZStaticData);
     static void             generateFileWithDynamicMetroData(std::string path);

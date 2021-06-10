@@ -10,13 +10,17 @@ int             JSON_Worker::ball_static_record_counter   = 1;
 void JSON_Worker::setCurrentDynamicData(std::vector <double> Time_Axis, 
                                         std::vector <double> XData, 
                                         std::vector <double> YData, 
-                                        std::vector <double> ZData, 
+                                        std::vector <double> ZData,
+                                        std::vector <double> UData,
+                                        std::vector <double> VData,
                                                      double  current_time) {
     
     (*JSON_Dynamic_Data)[std::to_string(ball_trajectory_counter)]["Time_Axis"] = Time_Axis;
     (*JSON_Dynamic_Data)[std::to_string(ball_trajectory_counter)]["XData"] = XData;
     (*JSON_Dynamic_Data)[std::to_string(ball_trajectory_counter)]["YData"] = YData;
     (*JSON_Dynamic_Data)[std::to_string(ball_trajectory_counter)]["ZData"] = ZData;
+    (*JSON_Dynamic_Data)[std::to_string(ball_trajectory_counter)]["UData"] = UData;
+    (*JSON_Dynamic_Data)[std::to_string(ball_trajectory_counter)]["VData"] = VData;
     (*JSON_Dynamic_Data)[std::to_string(ball_trajectory_counter)]["Current_Time"] = current_time;
 };
 
